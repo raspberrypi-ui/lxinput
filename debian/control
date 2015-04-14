@@ -1,0 +1,38 @@
+Source: lxinput
+Section: x11
+Priority: optional
+Maintainer: Debian LXDE Maintainers <lxde-debian@lists.lxde.org>
+Uploaders:
+ Andrew Lee (李健秋) <ajqlee@debian.org>, Daniel Baumann <daniel@debian.org>
+Build-Depends:
+ debhelper (>= 9), autotools-dev, docbook-xsl, intltool, libgtk2.0-dev,
+ libltdl-dev, libtool
+Standards-Version: 3.9.3
+Homepage: http://www.lxde.org/
+Vcs-Browser: http://git.lxde.org/gitweb/?p=debian/lxinput.git
+Vcs-Git: git://git.lxde.org/git/debian/lxinput.git
+
+Package: lxinput
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, lxsession
+Description: LXDE keyboard and mouse configuration
+ LXInput is a GUI application for the Lightweight X11 Desktop Environment
+ (LXDE).
+ .
+ It configures keyboard and mouse settings:
+ .
+  * Delay and Interval for character repeat
+  * Enable/Disable beeps of keyboard input error
+  * Swap left and right mouse buttons
+  * Mouse acceleration and sensitivity
+
+Package: lxinput-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends: ${misc:Depends}, lxinput (= ${binary:Version})
+Description: LXDE keyboard and mouse configuration (debug)
+ LXInput is a GUI application for the Lightweight X11 Desktop Environment
+ (LXDE).
+ .
+ This package contains the debugging symbols.

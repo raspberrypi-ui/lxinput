@@ -1,0 +1,119 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-05-20 00:19+0200\n"
+"PO-Revision-Date: 2011-07-28 09:36+0200\n"
+"Last-Translator: Cilyan <gaknar@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Pootle 2.0.5\n"
+
+#: ../data/lxinput.ui.h:1
+msgid "Input Device Preferences"
+msgstr "Préférences des périphériques d'entrée"
+
+#: ../data/lxinput.ui.h:2
+msgid "Sensitivity:"
+msgstr "Sensibilité :"
+
+#: ../data/lxinput.ui.h:3
+msgid "High"
+msgstr "Forte"
+
+#: ../data/lxinput.ui.h:4
+msgid "Low"
+msgstr "Faible"
+
+#: ../data/lxinput.ui.h:5
+msgid "Fast"
+msgstr "Rapide"
+
+#: ../data/lxinput.ui.h:6
+msgid "Slow"
+msgstr "Lente"
+
+#: ../data/lxinput.ui.h:7
+msgid "Acceleration:"
+msgstr "Accélération :"
+
+#: ../data/lxinput.ui.h:8
+msgid "<b>Motion</b>"
+msgstr "<b>Mouvement</b>"
+
+#: ../data/lxinput.ui.h:9
+msgid "Left handed (Swap left and right mouse buttons)"
+msgstr "Gaucher (Inverse les boutons droit et gauche de la souris)"
+
+#: ../data/lxinput.ui.h:10
+msgid "Mouse"
+msgstr "Souris"
+
+#: ../data/lxinput.ui.h:11
+msgid "Delay before each key starts repeating"
+msgstr "Délai avant que le caractère ne soit répété"
+
+#: ../data/lxinput.ui.h:12
+msgid "Repeat delay:"
+msgstr "Délai avant répétition :"
+
+#: ../data/lxinput.ui.h:13
+msgid "Interval between each key repeat"
+msgstr "Intervalle entre chaque répétition de caractère"
+
+#: ../data/lxinput.ui.h:14
+msgid "Long"
+msgstr "Long"
+
+#: ../data/lxinput.ui.h:15
+msgid "Short"
+msgstr "Court"
+
+#: ../data/lxinput.ui.h:16
+msgid "Repeat interval:"
+msgstr "Intervalle de répétition :"
+
+#: ../data/lxinput.ui.h:17
+msgid "Type in the following box to test your keyboard settings"
+msgstr "Tapez dans le champ ci-dessous pour tester vos paramètres clavier"
+
+#: ../data/lxinput.ui.h:18
+msgid "<b>Character Repeat</b>"
+msgstr "<b>Répétition des caractères</b>"
+
+#: ../data/lxinput.ui.h:19
+msgid "Beep when there is an error of keyboard input"
+msgstr "Émettre un son lors d'une erreur d'entrée sur le clavier"
+
+#: ../data/lxinput.ui.h:20
+msgid "<b>Keyboard layout</b>"
+msgstr "<b>Disposition du clavier</b>"
+
+#: ../data/lxinput.ui.h:21
+msgid "Keyboard"
+msgstr "Clavier"
+
+#: ../data/lxinput.ui.h:22
+msgid "Touch Pad"
+msgstr "Touchpad"
+
+#: ../data/lxinput.desktop.in.h:1
+msgid "Keyboard and Mouse"
+msgstr "Clavier et souris"
+
+#: ../data/lxinput.desktop.in.h:2
+msgid "Configure keyboard, mouse, and other input devices"
+msgstr "Configure le clavier, la souris et d'autres périphériques d'entrée"
+
+#, fuzzy
+#~ msgid "input-keyboard"
+#~ msgstr "Clavier"

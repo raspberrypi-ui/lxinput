@@ -1,0 +1,124 @@
+# Japanese translations for lxinput package
+# lxinput パッケージに対する日本語訳
+# Copyright (C) 2009 THE lxinput'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lxinput package.
+# Hironao Komatsu <hironao@users.sourceforge.net>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lxinput 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-05-20 00:19+0200\n"
+"PO-Revision-Date: 2009-05-12 04:08+0500\n"
+"Last-Translator: Muhammad Ali Makki <makki.ma@gmail.com>\n"
+"Language-Team: Urdu <makki.ma@gmail.com>\n"
+"Language: ur\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Poedit-Language: Urdu\n"
+"X-Poedit-Country: PAKISTAN\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: ../data/lxinput.ui.h:1
+msgid "Input Device Preferences"
+msgstr "ماداخل ڈیوائس ترجیحات"
+
+#: ../data/lxinput.ui.h:2
+msgid "Sensitivity:"
+msgstr "حساسیت:"
+
+#: ../data/lxinput.ui.h:3
+msgid "High"
+msgstr "اونچا"
+
+#: ../data/lxinput.ui.h:4
+msgid "Low"
+msgstr "کم"
+
+#: ../data/lxinput.ui.h:5
+msgid "Fast"
+msgstr "تیز"
+
+#: ../data/lxinput.ui.h:6
+msgid "Slow"
+msgstr "آہستہ"
+
+#: ../data/lxinput.ui.h:7
+msgid "Acceleration:"
+msgstr "مسرع:"
+
+#: ../data/lxinput.ui.h:8
+msgid "<b>Motion</b>"
+msgstr "<b>حرکت</b>"
+
+#: ../data/lxinput.ui.h:9
+msgid "Left handed (Swap left and right mouse buttons)"
+msgstr "بایاں بازو (بائیں اور دائیں ماؤس بٹن میں ادل بدل)"
+
+#: ../data/lxinput.ui.h:10
+msgid "Mouse"
+msgstr "ماؤس"
+
+#: ../data/lxinput.ui.h:11
+msgid "Delay before each key starts repeating"
+msgstr "ہر کلید کا دہراؤ شروع کرنے سے پہلے وقفہ"
+
+#: ../data/lxinput.ui.h:12
+msgid "Repeat delay:"
+msgstr "دہراؤ تاخیر:"
+
+#: ../data/lxinput.ui.h:13
+msgid "Interval between each key repeat"
+msgstr "ہر کلید کے دہراؤ کے درمیان وقفہ"
+
+#: ../data/lxinput.ui.h:14
+msgid "Long"
+msgstr "طویل"
+
+#: ../data/lxinput.ui.h:15
+msgid "Short"
+msgstr "قصیر"
+
+#: ../data/lxinput.ui.h:16
+msgid "Repeat interval:"
+msgstr "دہراؤ وقفہ:"
+
+#: ../data/lxinput.ui.h:17
+msgid "Type in the following box to test your keyboard settings"
+msgstr "اپنے کیبورد کی ترتیبات دیکھنے کے لیے ذیل کے بکس میں لکھیں"
+
+#: ../data/lxinput.ui.h:18
+msgid "<b>Character Repeat</b>"
+msgstr "<b>حروف کا دہراؤ</b>"
+
+#: ../data/lxinput.ui.h:19
+msgid "Beep when there is an error of keyboard input"
+msgstr "کیبورد کے ماداخل میں غلطی پر بیپ دیں"
+
+#: ../data/lxinput.ui.h:20
+#, fuzzy
+msgid "<b>Keyboard layout</b>"
+msgstr "کیبورڈ"
+
+#: ../data/lxinput.ui.h:21
+msgid "Keyboard"
+msgstr "کیبورڈ"
+
+#: ../data/lxinput.ui.h:22
+msgid "Touch Pad"
+msgstr "ٹچ پیڈ"
+
+#: ../data/lxinput.desktop.in.h:1
+#, fuzzy
+msgid "Keyboard and Mouse"
+msgstr "کیبورڈ"
+
+#: ../data/lxinput.desktop.in.h:2
+msgid "Configure keyboard, mouse, and other input devices"
+msgstr ""
+
+#, fuzzy
+#~ msgid "input-keyboard"
+#~ msgstr "کیبورڈ"
