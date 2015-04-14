@@ -4,17 +4,17 @@
   <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkDialog" id="dlg">
     <property name="can_focus">False</property>
-    <property name="border_width">12</property>
-    <property name="title" translatable="yes">Input Device Preferences</property>
+    <property name="border_width">6</property>
+    <property name="title" translatable="yes">Mouse and Keyboard Settings</property>
     <property name="resizable">False</property>
     <property name="window_position">center</property>
-    <property name="icon_name">input-mouse</property>
+    <property name="icon_name">preferences-desktop-peripherals</property>
     <property name="type_hint">dialog</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="vbox">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="spacing">2</property>
+        <property name="spacing">6</property>
         <child internal-child="action_area">
           <object class="GtkHButtonBox" id="dialog-action_area">
             <property name="visible">True</property>
@@ -245,6 +245,19 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="spacing">6</property>
+                <child>
+                  <object class="GtkImage" id="newimage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="pixel_size">16</property>
+                    <property name="icon_name">input-mouse</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
                 <child>
                   <object class="GtkLabel" id="label1">
                     <property name="visible">True</property>
