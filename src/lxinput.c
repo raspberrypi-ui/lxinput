@@ -268,7 +268,7 @@ int main(int argc, char** argv)
     }
     else
     {
-            gtk_button_set_label(kb_layout, program);
+            gtk_button_set_label(kb_layout, _("Keyboard Layout..."));
     }
 
     g_object_unref( builder );
