@@ -68,11 +68,18 @@ static void on_mouse_threshold_changed(GtkRange* range, gpointer user_data)
                              0, 10, threshold);
 }
 
-static void on_kb_range_changed(GtkRange* range, int* val)
+static void on_kb_delay_changed(GtkRange* range, int* val)
 {
-    *val = (int)gtk_range_get_value(range);
+    delay = (int)gtk_range_get_value(range);
     /* apply keyboard values */
-    XkbSetAutoRepeatRate(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), XkbUseCoreKbd, delay, interval);
+    int res = XkbSetAutoRepeatRate(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), XkbUseCoreKbd, delay, interval);
+}
+
+static void on_kb_thresh_changed(GtkRange* range, int* val)
+{
+    interval = (int)gtk_range_get_value(range);
+    /* apply keyboard values */
+    int res = XkbSetAutoRepeatRate(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), XkbUseCoreKbd, delay, interval);
 }
 
 /* This function is taken from Gnome's control-center 2.6.0.3 (gnome-settings-mouse.c) and was modified*/
@@ -153,7 +160,8 @@ static void on_kb_layout_clicked(GtkButton *button,  gpointer   user_data)
 
     int status;
     char* output = NULL;
-    const gchar *program = detect_keymap_program();
+    //const gchar *program = detect_keymap_program();
+    const gchar *program = "python -S /usr/local/bin/lxkeymap";
 
     if (program)
     {
@@ -293,9 +301,9 @@ int main(int argc, char** argv)
     g_signal_connect(mouse_left_handed, "toggled", G_CALLBACK(on_left_handed_toggle), NULL);
 
     set_range_stops(kb_delay, 10);
-    g_signal_connect(kb_delay, "value-changed", G_CALLBACK(on_kb_range_changed), &kb_delay);
+    g_signal_connect(kb_delay, "value-changed", G_CALLBACK(on_kb_delay_changed), &kb_delay);
     set_range_stops(kb_interval, 10);
-    g_signal_connect(kb_interval, "value-changed", G_CALLBACK(on_kb_range_changed), &kb_interval);
+    g_signal_connect(kb_interval, "value-changed", G_CALLBACK(on_kb_thresh_changed), &kb_interval);
     g_signal_connect(kb_beep, "toggled", G_CALLBACK(on_kb_beep_toggle), NULL);
     g_signal_connect(kb_layout, "clicked", G_CALLBACK(on_kb_layout_clicked), NULL);
 
