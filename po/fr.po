@@ -2,21 +2,31 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-20 00:19+0200\n"
-"PO-Revision-Date: 2011-07-28 09:36+0200\n"
-"Last-Translator: Cilyan <gaknar@gmail.com>\n"
+"POT-Creation-Date: 2014-09-15 20:06+0300\n"
+"PO-Revision-Date: 2014-09-28 15:32+0000\n"
+"Last-Translator: Julien Henry <Julius22@laposte.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Pootle 2.0.5\n"
+"X-Generator: Pootle 2.6.0-rc1\n"
+"X-POOTLE-MTIME: 1411918366.000000\n"
+
+#: ../src/lxinput.c:351
+msgid "LXInput autostart"
+msgstr "Démarrage automatique de LXInput"
+
+#: ../src/lxinput.c:352
+msgid "Setup keyboard and mouse using settings done in LXInput"
+msgstr ""
+"Configurer le clavier et la souris en utilisant le paramétrage effectué dans "
+"LXInput"
 
 #: ../data/lxinput.ui.h:1
 msgid "Input Device Preferences"
@@ -52,7 +62,7 @@ msgstr "<b>Mouvement</b>"
 
 #: ../data/lxinput.ui.h:9
 msgid "Left handed (Swap left and right mouse buttons)"
-msgstr "Gaucher (Inverse les boutons droit et gauche de la souris)"
+msgstr "Gaucher (inverse les boutons droit et gauche de la souris)"
 
 #: ../data/lxinput.ui.h:10
 msgid "Mouse"
@@ -104,7 +114,7 @@ msgstr "Clavier"
 
 #: ../data/lxinput.ui.h:22
 msgid "Touch Pad"
-msgstr "Touchpad"
+msgstr "Pavé tactile"
 
 #: ../data/lxinput.desktop.in.h:1
 msgid "Keyboard and Mouse"
