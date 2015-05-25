@@ -158,8 +158,8 @@ static void on_kb_layout_clicked(GtkButton *button,  gpointer   user_data)
 
     int status;
     char* output = NULL;
-    const gchar *program = detect_keymap_program();
-    //const gchar *program = "python -S /usr/local/bin/lxkeymap";   !!!!SPL new faster version !!!!
+    //const gchar *program = detect_keymap_program();
+    const gchar *program = "python -S /usr/local/bin/lxkeymap";   //!!!!SPL new faster version !!!!
 
     if (program)
     {
