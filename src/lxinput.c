@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include <gdk/gdkx.h>
 #include <X11/Xlib.h>
@@ -40,6 +41,7 @@ static char* file = NULL;
 static GtkWidget *dlg;
 static GtkRange *mouse_accel;
 static GtkRange *mouse_threshold;
+static GtkRange *mouse_dclick;
 static GtkToggleButton* mouse_left_handed;
 static GtkRange *kb_delay;
 static GtkRange *kb_interval;
@@ -49,12 +51,24 @@ static GtkLabel* kb_layout_label;
 
 static int accel = 20, old_accel = 20;
 static int threshold = 10, old_threshold = 10;
+static int dclick;
 static gboolean left_handed = FALSE, old_left_handed = FALSE;
 
 static int delay = 500, old_delay = 500;
 static int interval = 30, old_interval = 30;
 static gboolean beep = TRUE, old_beep = TRUE;
 
+
+static void reload_all_programs()
+{
+    GdkEventClient event;
+    event.type = GDK_CLIENT_EVENT;
+    event.send_event = TRUE;
+    event.window = NULL;
+    event.message_type = gdk_atom_intern("_GTK_READ_RCFILES", FALSE);
+    event.data_format = 8;
+    gdk_event_send_clientmessage_toall((GdkEvent *)&event);
+}
 
 static void on_mouse_accel_changed(GtkRange* range, gpointer user_data)
 {
@@ -69,6 +83,15 @@ static void on_mouse_threshold_changed(GtkRange* range, gpointer user_data)
     threshold = (int)gtk_range_get_value(range);
     XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), False, True,
                              0, 10, threshold);
+}
+
+static void on_mouse_dclick_changed(GtkRange* range, gpointer user_data)
+{
+    char cmdbuf[128];
+    dclick = (int) gtk_range_get_value(range);
+	sprintf (cmdbuf, "sed -i s/gtk-double-click-time=[0-9]*/gtk-double-click-time=%d/g %s", dclick, "~/.gtkrc-2.0");
+	system (cmdbuf);
+	reload_all_programs ();
 }
 
 static void on_kb_range_changed(GtkRange* range, int* val)
@@ -256,6 +279,7 @@ int main(int argc, char** argv)
     mouse_accel = (GtkRange*)gtk_builder_get_object(builder,"mouse_accel");
     mouse_threshold = (GtkRange*)gtk_builder_get_object(builder,"mouse_threshold");
     mouse_left_handed = (GtkToggleButton*)gtk_builder_get_object(builder,"left_handed");
+    mouse_dclick = (GtkRange*)gtk_builder_get_object(builder, "mouse_dclick");
 
     kb_delay = (GtkRange*)gtk_builder_get_object(builder,"kb_delay");
     kb_interval = (GtkRange*)gtk_builder_get_object(builder,"kb_interval");
@@ -295,6 +319,7 @@ int main(int argc, char** argv)
     set_range_stops(mouse_threshold, 10);
     g_signal_connect(mouse_threshold, "value-changed", G_CALLBACK(on_mouse_threshold_changed), NULL);
     g_signal_connect(mouse_left_handed, "toggled", G_CALLBACK(on_left_handed_toggle), NULL);
+    g_signal_connect(mouse_dclick, "value-changed", G_CALLBACK(on_mouse_dclick_changed), NULL);
 
     set_range_stops(kb_delay, 10);
     g_signal_connect(kb_delay, "value-changed", G_CALLBACK(on_kb_range_changed), &delay);
