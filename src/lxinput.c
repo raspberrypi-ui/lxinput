@@ -51,7 +51,7 @@ static GtkLabel* kb_layout_label;
 
 static int accel = 20, old_accel = 20;
 static int threshold = 10, old_threshold = 10;
-static int dclick;
+static int dclick = 250, old_dclick = 250;
 static gboolean left_handed = FALSE, old_left_handed = FALSE;
 
 static int delay = 500, old_delay = 500;
@@ -59,7 +59,7 @@ static int interval = 30, old_interval = 30;
 static gboolean beep = TRUE, old_beep = TRUE;
 
 
-static void reload_all_programs()
+static void reload_all_programs (void)
 {
     GdkEventClient event;
     event.type = GDK_CLIENT_EVENT;
@@ -85,13 +85,33 @@ static void on_mouse_threshold_changed(GtkRange* range, gpointer user_data)
                              0, 10, threshold);
 }
 
-static void on_mouse_dclick_changed(GtkRange* range, gpointer user_data)
+static int get_dclick_time (void)
+{
+    FILE *fp = popen ("grep gtk-double-click-time ~/.gtkrc-2.0 | cut -d \"=\" -f 2", "r");
+    char buf[256];
+    int val;
+
+    if (fp == NULL) return 250;
+    if (fgets (buf, sizeof (buf) - 1, fp) != NULL)
+    {
+        if (sscanf (buf, "%d", &val)) return val;
+    }
+    return 250;
+}
+
+static void set_dclick_time (int time)
 {
     char cmdbuf[128];
-    dclick = (int) gtk_range_get_value(range);
+    dclick = time;
 	sprintf (cmdbuf, "sed -i s/gtk-double-click-time=[0-9]*/gtk-double-click-time=%d/g %s", dclick, "~/.gtkrc-2.0");
 	system (cmdbuf);
 	reload_all_programs ();
+}
+
+static void on_mouse_dclick_changed(GtkRange* range, gpointer user_data)
+{
+    int time = (int) gtk_range_get_value(range);
+    set_dclick_time (time);
 }
 
 static void on_kb_range_changed(GtkRange* range, int* val)
@@ -243,6 +263,8 @@ static void load_settings()
 
     g_free(user_config_file);
 
+    old_dclick = dclick = get_dclick_time ();
+
 }
 
 int main(int argc, char** argv)
@@ -308,6 +330,7 @@ int main(int argc, char** argv)
     /* init the UI */
     gtk_range_set_value(mouse_accel, (gdouble)accel / 10.0);
     gtk_range_set_value(mouse_threshold, threshold);
+    gtk_range_set_value(mouse_dclick, dclick);
     gtk_toggle_button_set_active(mouse_left_handed, left_handed);
 
     gtk_range_set_value(kb_delay, delay);
@@ -403,6 +426,7 @@ int main(int argc, char** argv)
         XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), True, True,
                                  accel, 10, threshold);
         set_left_handed_mouse();
+        set_dclick_time (old_dclick);
     }
 
     gtk_widget_destroy( dlg );
