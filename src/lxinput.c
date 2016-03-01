@@ -31,6 +31,8 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <wordexp.h>
 
 #include <gdk/gdkx.h>
 #include <X11/Xlib.h>
@@ -70,6 +72,53 @@ static void reload_all_programs (void)
     gdk_event_send_clientmessage_toall((GdkEvent *)&event);
 }
 
+static int get_dclick_time (void)
+{
+    FILE *fp;
+    char buf[256];
+    int val;
+    wordexp_t exp;
+    struct stat st;
+
+    // check to see if there is a gtkrc file in the home directory
+    wordexp ("~/.gtkrc-2.0", &exp, 0);
+    if (stat (exp.we_wordv[0], &st) != 0)
+    {
+        // there isn't - create one with default value
+        sprintf (buf, "echo gtk-double-click-time=250 > %s", exp.we_wordv[0]);
+        system (buf);
+        return 250;
+    }
+
+    // there is a file - does it contain a value?
+    fp = popen ("grep gtk-double-click-time ~/.gtkrc-2.0", "r");
+    if (fp == NULL) return 0;  // should never happen...
+    if (fgets (buf, sizeof (buf) - 1, fp) != NULL)
+    {
+        if (sscanf (buf, "gtk-double-click-time=%d", &val) == 1) return val;
+    }
+
+    // no matching parameter in file - prepend one
+	sprintf (buf, "sed -i \"1i gtk-double-click-time=250\" %s", exp.we_wordv[0]);
+    system (buf);
+    return 250;
+}
+
+static void set_dclick_time (int time)
+{
+    char cmdbuf[128];
+
+    dclick = time;
+	sprintf (cmdbuf, "sed -i s/gtk-double-click-time=[0-9]*/gtk-double-click-time=%d/g ~/.gtkrc-2.0", dclick);
+	system (cmdbuf);
+	reload_all_programs ();
+}
+
+static void on_mouse_dclick_changed (GtkRange* range, gpointer user_data)
+{
+    set_dclick_time ((int) gtk_range_get_value (range));
+}
+
 static void on_mouse_accel_changed(GtkRange* range, gpointer user_data)
 {
     accel = (int)(gtk_range_get_value(range) * 10);
@@ -83,35 +132,6 @@ static void on_mouse_threshold_changed(GtkRange* range, gpointer user_data)
     threshold = (int)gtk_range_get_value(range);
     XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), False, True,
                              0, 10, threshold);
-}
-
-static int get_dclick_time (void)
-{
-    FILE *fp = popen ("grep gtk-double-click-time ~/.gtkrc-2.0 | cut -d \"=\" -f 2", "r");
-    char buf[256];
-    int val;
-
-    if (fp == NULL) return 250;
-    if (fgets (buf, sizeof (buf) - 1, fp) != NULL)
-    {
-        if (sscanf (buf, "%d", &val)) return val;
-    }
-    return 250;
-}
-
-static void set_dclick_time (int time)
-{
-    char cmdbuf[128];
-    dclick = time;
-	sprintf (cmdbuf, "sed -i s/gtk-double-click-time=[0-9]*/gtk-double-click-time=%d/g %s", dclick, "~/.gtkrc-2.0");
-	system (cmdbuf);
-	reload_all_programs ();
-}
-
-static void on_mouse_dclick_changed(GtkRange* range, gpointer user_data)
-{
-    int time = (int) gtk_range_get_value(range);
-    set_dclick_time (time);
 }
 
 static void on_kb_range_changed(GtkRange* range, int* val)
@@ -264,7 +284,6 @@ static void load_settings()
     g_free(user_config_file);
 
     old_dclick = dclick = get_dclick_time ();
-
 }
 
 int main(int argc, char** argv)
