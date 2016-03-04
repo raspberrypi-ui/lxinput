@@ -73,7 +73,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
-                    <property name="shadow_type">none</property>
                     <child>
                       <object class="GtkAlignment" id="alignment2">
                         <property name="visible">True</property>
@@ -213,7 +212,7 @@
                       <object class="GtkLabel" id="label16">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Motion&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">Motion</property>
                         <property name="use_markup">True</property>
                       </object>
                     </child>
@@ -244,7 +243,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
-                    <property name="shadow_type">none</property>
                     <child>
                       <object class="GtkAlignment" id="alignment4">
                         <property name="visible">True</property>
@@ -320,7 +318,7 @@
                       <object class="GtkLabel" id="label22">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Double-click&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">Double-click</property>
                         <property name="use_markup">True</property>
                       </object>
                     </child>
@@ -379,7 +377,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
-                    <property name="shadow_type">none</property>
                     <child>
                       <object class="GtkAlignment" id="alignment1">
                         <property name="visible">True</property>
@@ -560,7 +557,7 @@
                       <object class="GtkLabel" id="label6">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Character Repeat&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">Character Repeat</property>
                         <property name="use_markup">True</property>
                       </object>
                     </child>
