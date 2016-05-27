@@ -97,6 +97,7 @@ static int get_dclick_time (void)
     {
         if (sscanf (buf, "gtk-double-click-time=%d", &val) == 1) return val;
     }
+    pclose (fp);
 
     // no matching parameter in file - prepend one
 	sprintf (buf, "sed -i \"1i gtk-double-click-time=250\" %s", exp.we_wordv[0]);
