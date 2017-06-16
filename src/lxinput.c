@@ -55,10 +55,13 @@ static int accel = 20, old_accel = 20;
 static int threshold = 10, old_threshold = 10;
 static int dclick = 250, old_dclick = 250;
 static gboolean left_handed = FALSE, old_left_handed = FALSE;
+static float facc = 0.0, old_facc = 0.0;
 
 static int delay = 500, old_delay = 500;
 static int interval = 30, old_interval = 30;
 static gboolean beep = TRUE, old_beep = TRUE;
+
+static GList *devs = NULL;
 
 
 static void reload_all_programs (void)
@@ -122,9 +125,19 @@ static void on_mouse_dclick_changed (GtkRange* range, gpointer user_data)
 
 static void on_mouse_accel_changed(GtkRange* range, gpointer user_data)
 {
-    accel = (int)(gtk_range_get_value(range) * 10);
-    XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), True, False,
-                             accel, 10, 0);
+    char buf[256];
+    facc = gtk_range_get_value(range);
+    facc /= 5.0;
+    facc -= 1;
+    //sprintf (buf, "LIST=$(xinput list | grep pointer | grep slave | cut -f 2 | cut -d = -f 2 | tr '\n' ' '); for num in $LIST; do xinput --set-prop $num 'libinput Accel Speed' %f ; done", facc);
+    //system (buf);
+
+    GList *l;
+    for (l = devs; l != NULL; l = l->next)
+    {
+        sprintf (buf, "xinput --set-prop \"pointer:%s\" \"libinput Accel Speed\" %f", l->data, facc);
+        system (buf);
+    }
 }
 
 static void on_mouse_threshold_changed(GtkRange* range, gpointer user_data)
@@ -287,10 +300,70 @@ static void load_settings()
     old_dclick = dclick = get_dclick_time ();
 }
 
+void update_mouse_speed (float spd)
+{
+    FILE *fp, *foutp;
+    char buf[128], *cptr;
+
+    foutp = fopen ("/usr/share/X11/xorg.conf.d/50-mouse-acceleration.conf", "wb");
+
+    // need to get the device list from xinput first...
+//    fp = popen ("xinput list | grep pointer | grep slave | cut -f 1 | cut -d ' ' -f 5-", "r");
+//    if (fp == NULL) return;
+//    while (fgets (buf, sizeof (buf) - 1, fp))
+//    {
+//        cptr = buf + strlen (buf) - 1;
+//        while (*cptr == ' ' || *cptr == '\n') *cptr-- = 0;
+//        fprintf (foutp, "Section \"InputClass\"\n\tIdentifier \"%s\"\n\tMatchDriver \"libinput\"\n\tMatchProduct \"%s\"\n\tOption \"Accel Speed\" \"%f\"\nEndSection\n\n", buf, buf, spd);
+//    }
+//    pclose (fp);
+
+    GList *l;
+    for (l = devs; l != NULL; l = l->next)
+    {
+        fprintf (foutp, "Section \"InputClass\"\n\tIdentifier \"%s\"\n\tMatchDriver \"libinput\"\n\tMatchProduct \"%s\"\n\tOption \"Accel Speed\" \"%f\"\nEndSection\n\n", l->data, l->data, spd);
+    }
+    fclose (foutp);
+}
+
+void get_valid_mice (void)
+{
+    FILE *fp, *fp2;
+    char buf[128], *cptr, cmd[256];
+
+    // need to get the device list from xinput first...
+    fp = popen ("xinput list | grep pointer | grep slave | cut -f 1 | cut -d ' ' -f 5-", "r");
+    if (fp == NULL) return;
+    while (fgets (buf, sizeof (buf) - 1, fp))
+    {
+        cptr = buf + strlen (buf) - 1;
+        while (*cptr == ' ' || *cptr == '\n') *cptr-- = 0;
+        sprintf (cmd, "xinput list-props \"pointer:%s\" | grep -q \"Accel Speed\"", buf);
+        fp2 = popen (cmd, "r");
+        if (!pclose (fp2)) devs = g_list_append (devs, g_strdup (buf));
+    }
+    pclose (fp);
+}
+
+void read_mouse_speed (void)
+{
+    char buf[128];
+    float val;
+    FILE *fp = popen ("grep -Po \"Accel Speed\\\" [-.0-9]*\" ~/.config/autostart/LXinput-setup.desktop | head -1 | cut -f 3 -d ' '", "r");
+    if (fp == NULL) return;
+    if (fgets (buf, sizeof (buf) - 1, fp))
+    {
+        if (sscanf (buf, "%f", &val) == 1) facc = old_facc = val;
+    }
+    pclose (fp);
+}
+
 int main(int argc, char** argv)
 {
     GtkBuilder* builder;
-    char* str = NULL;
+    char* str = NULL, *mstr = NULL;
+
+    get_valid_mice ();
 
     GKeyFile* kf = g_key_file_new();
     const char* session_name = g_getenv("DESKTOP_SESSION");
@@ -319,7 +392,7 @@ int main(int argc, char** argv)
     gtk_dialog_set_alternative_button_order( (GtkDialog*)dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1 );
 
     mouse_accel = (GtkRange*)gtk_builder_get_object(builder,"mouse_accel");
-    mouse_threshold = (GtkRange*)gtk_builder_get_object(builder,"mouse_threshold");
+    //mouse_threshold = (GtkRange*)gtk_builder_get_object(builder,"mouse_threshold");
     mouse_left_handed = (GtkToggleButton*)gtk_builder_get_object(builder,"left_handed");
     mouse_dclick = (GtkRange*)gtk_builder_get_object(builder, "mouse_dclick");
 
@@ -346,11 +419,12 @@ int main(int argc, char** argv)
 
     /* read the config flie */
     load_settings();
+    read_mouse_speed ();
 
     /* init the UI */
-    gtk_range_set_value(mouse_accel, (gdouble)accel / 10.0);
-    gtk_range_set_value(mouse_threshold, threshold);
-    gtk_range_set_value(mouse_dclick, dclick);
+    gtk_range_set_value(mouse_accel, (facc + 1) * 5.0);
+    //gtk_range_set_value(mouse_threshold, threshold);
+    //gtk_range_set_value(mouse_dclick, dclick);
     gtk_toggle_button_set_active(mouse_left_handed, left_handed);
 
     gtk_range_set_value(kb_delay, delay);
@@ -359,10 +433,10 @@ int main(int argc, char** argv)
 
     set_range_stops(mouse_accel, 10);
     g_signal_connect(mouse_accel, "value-changed", G_CALLBACK(on_mouse_accel_changed), NULL);
-    set_range_stops(mouse_threshold, 10);
-    g_signal_connect(mouse_threshold, "value-changed", G_CALLBACK(on_mouse_threshold_changed), NULL);
+    //set_range_stops(mouse_threshold, 10);
+    //g_signal_connect(mouse_threshold, "value-changed", G_CALLBACK(on_mouse_threshold_changed), NULL);
     g_signal_connect(mouse_left_handed, "toggled", G_CALLBACK(on_left_handed_toggle), NULL);
-    g_signal_connect(mouse_dclick, "value-changed", G_CALLBACK(on_mouse_dclick_changed), NULL);
+    //g_signal_connect(mouse_dclick, "value-changed", G_CALLBACK(on_mouse_dclick_changed), NULL);
 
     set_range_stops(kb_delay, 10);
     g_signal_connect(kb_delay, "value-changed", G_CALLBACK(on_kb_range_changed), &delay);
@@ -402,6 +476,20 @@ int main(int argc, char** argv)
         g_file_set_contents(user_config_file, str, len, NULL);
         g_free(str);
 
+        GList *l;
+        char *ndev;
+        for (l = devs; l != NULL; l = l->next)
+        {
+            if (!mstr)
+                mstr = g_strdup_printf ("; xinput --set-prop \"pointer:%s\" \"libinput Accel Speed\" %f", l->data, facc);
+            else
+            {
+                ndev = g_strdup_printf ("; xinput --set-prop \"pointer:%s\" \"libinput Accel Speed\" %f", l->data, facc);
+                mstr = g_strconcat (mstr, ndev, NULL);
+                g_free (ndev);
+            }
+        }
+
         /* ask the settigns daemon to reload */
         /* FIXME: is this needed? */
         /* g_spawn_command_line_sync("lxde-settings-daemon reload", NULL, NULL, NULL, NULL); */
@@ -417,14 +505,15 @@ int main(int argc, char** argv)
                                   "Name=%s\n"
                                   "Comment=%s\n"
                                   "NoDisplay=true\n"
-                                  "Exec=sh -c 'xset m %d/10 %d r rate %d %d b %s%s'\n"
+                                  "Exec=sh -c 'xset m %d/10 %d r rate %d %d b %s%s%s'\n"
                                   "NotShowIn=GNOME;KDE;XFCE;\n",
                                   _("LXInput autostart"),
                                   _("Setup keyboard and mouse using settings done in LXInput"),
                                   /* FIXME: how to setup left-handed mouse? */
                                   accel, threshold, delay, interval,
                                   beep ? "on" : "off",
-                                  left_handed ? ";xmodmap -e \"pointer = 3 2 1\"" : "");
+                                  left_handed ? ";xmodmap -e \"pointer = 3 2 1\"" : "",
+                                  mstr);
             g_file_set_contents(user_config_file, str, -1, NULL);
             g_free(str);
         }
@@ -448,6 +537,17 @@ int main(int argc, char** argv)
                                  accel, 10, threshold);
         set_left_handed_mouse();
         set_dclick_time (old_dclick);
+
+        char buf[256];
+        facc = old_facc;
+        facc /= 5.0;
+        facc -= 1;
+        GList *l;
+        for (l = devs; l != NULL; l = l->next)
+        {
+            sprintf (buf, "xinput --set-prop \"pointer:%s\" \"libinput Accel Speed\" %f", l->data, facc);
+            system (buf);
+        }
     }
 
     gtk_widget_destroy( dlg );
