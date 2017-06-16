@@ -294,7 +294,7 @@ static void load_settings()
 
     g_free(user_config_file);
 
-    old_dclick = dclick = get_dclick_time ();
+    //old_dclick = dclick = get_dclick_time ();
 }
 
 void get_valid_mice (void)
@@ -365,7 +365,7 @@ int main(int argc, char** argv)
     mouse_accel = (GtkRange*)gtk_builder_get_object(builder,"mouse_accel");
     //mouse_threshold = (GtkRange*)gtk_builder_get_object(builder,"mouse_threshold");
     mouse_left_handed = (GtkToggleButton*)gtk_builder_get_object(builder,"left_handed");
-    mouse_dclick = (GtkRange*)gtk_builder_get_object(builder, "mouse_dclick");
+    //mouse_dclick = (GtkRange*)gtk_builder_get_object(builder, "mouse_dclick");
 
     kb_delay = (GtkRange*)gtk_builder_get_object(builder,"kb_delay");
     kb_interval = (GtkRange*)gtk_builder_get_object(builder,"kb_interval");
@@ -504,10 +504,10 @@ int main(int argc, char** argv)
         accel = old_accel;
         threshold = old_threshold;
         left_handed = old_left_handed;
-        XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), True, True,
-                                 accel, 10, threshold);
+        //XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), True, True,
+        //                         accel, 10, threshold);
         set_left_handed_mouse();
-        set_dclick_time (old_dclick);
+        //set_dclick_time (old_dclick);
 
         char buf[256];
         facc = (old_facc / 5.0) - 1.0;
