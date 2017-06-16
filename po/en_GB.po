@@ -53,7 +53,7 @@ msgstr "Slow"
 
 #: ../data/lxinput.ui.h:7
 msgid "Acceleration:"
-msgstr "Acceleration:"
+msgstr "Speed:"
 
 #: ../data/lxinput.ui.h:8
 msgid "<b>Motion</b>"
@@ -117,11 +117,11 @@ msgstr "Touch Pad"
 
 #: ../data/lxinput.desktop.in.h:1
 msgid "Keyboard and Mouse"
-msgstr "Keyboard and Mouse"
+msgstr "Mouse and Keyboard Settings"
 
 #: ../data/lxinput.desktop.in.h:2
 msgid "Configure keyboard, mouse, and other input devices"
-msgstr "Configure keyboard, mouse, and other input devices"
+msgstr "Configure mouse, keyboard, and other input devices"
 
 #~ msgid "input-keyboard"
 #~ msgstr "Keyboard"

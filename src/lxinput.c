@@ -127,10 +127,7 @@ static void on_mouse_accel_changed(GtkRange* range, gpointer user_data)
 {
     char buf[256];
     facc = gtk_range_get_value(range);
-    facc /= 5.0;
-    facc -= 1;
-    //sprintf (buf, "LIST=$(xinput list | grep pointer | grep slave | cut -f 2 | cut -d = -f 2 | tr '\n' ' '); for num in $LIST; do xinput --set-prop $num 'libinput Accel Speed' %f ; done", facc);
-    //system (buf);
+    facc = (facc / 5.0) - 1.0;
 
     GList *l;
     for (l = devs; l != NULL; l = l->next)
@@ -298,32 +295,6 @@ static void load_settings()
     g_free(user_config_file);
 
     old_dclick = dclick = get_dclick_time ();
-}
-
-void update_mouse_speed (float spd)
-{
-    FILE *fp, *foutp;
-    char buf[128], *cptr;
-
-    foutp = fopen ("/usr/share/X11/xorg.conf.d/50-mouse-acceleration.conf", "wb");
-
-    // need to get the device list from xinput first...
-//    fp = popen ("xinput list | grep pointer | grep slave | cut -f 1 | cut -d ' ' -f 5-", "r");
-//    if (fp == NULL) return;
-//    while (fgets (buf, sizeof (buf) - 1, fp))
-//    {
-//        cptr = buf + strlen (buf) - 1;
-//        while (*cptr == ' ' || *cptr == '\n') *cptr-- = 0;
-//        fprintf (foutp, "Section \"InputClass\"\n\tIdentifier \"%s\"\n\tMatchDriver \"libinput\"\n\tMatchProduct \"%s\"\n\tOption \"Accel Speed\" \"%f\"\nEndSection\n\n", buf, buf, spd);
-//    }
-//    pclose (fp);
-
-    GList *l;
-    for (l = devs; l != NULL; l = l->next)
-    {
-        fprintf (foutp, "Section \"InputClass\"\n\tIdentifier \"%s\"\n\tMatchDriver \"libinput\"\n\tMatchProduct \"%s\"\n\tOption \"Accel Speed\" \"%f\"\nEndSection\n\n", l->data, l->data, spd);
-    }
-    fclose (foutp);
 }
 
 void get_valid_mice (void)
@@ -539,13 +510,11 @@ int main(int argc, char** argv)
         set_dclick_time (old_dclick);
 
         char buf[256];
-        facc = old_facc;
-        facc /= 5.0;
-        facc -= 1;
+        facc = (old_facc / 5.0) - 1.0;
         GList *l;
         for (l = devs; l != NULL; l = l->next)
         {
-            sprintf (buf, "xinput --set-prop \"pointer:%s\" \"libinput Accel Speed\" %f", l->data, facc);
+            sprintf (buf, "xinput --set-prop \"pointer:%s\" \"libinput Accel Speed\" %f", l->data, old_facc);
             system (buf);
         }
     }
