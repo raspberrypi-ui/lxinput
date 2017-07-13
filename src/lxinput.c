@@ -79,8 +79,8 @@ static void reload_all_programs (void)
 static void set_dclick_time (int time)
 {
     const char *session_name;
-    char *user_config_file, *str;
-    char colbuf[128];
+    char *user_config_file, *str, *fname;
+    char cmdbuf[256];
     GKeyFile *kf;
     gsize len;
 
@@ -106,6 +106,15 @@ static void set_dclick_time (int time)
 
     g_free (user_config_file);
     g_free (str);
+
+    // update the openbox double-click as well
+    fname = g_strconcat (g_ascii_strdown (session_name, -1), "-rc.xml", NULL);
+    user_config_file = g_build_filename (g_get_user_config_dir (), "openbox/", fname, NULL);
+    g_free (fname);
+    sprintf (cmdbuf, "sed -i s#'<doubleClickTime>[0-9]*</doubleClickTime>'#'<doubleClickTime>%d</doubleClickTime>'#g %s", time, user_config_file);
+    system (cmdbuf);
+    g_free (user_config_file);
+    system ("openbox --reconfigure");
 
     reload_all_programs ();
 }
@@ -282,7 +291,7 @@ static void load_settings()
         old_beep = beep = g_key_file_get_boolean(kf, "Keyboard", "Beep", NULL);
 
     val = g_key_file_get_integer(kf, "GTK", "iNet/DoubleClickTime", NULL);
-    if(val > 0)
+    if (val > 0)
         old_dclick = dclick = val;
 
     g_key_file_free(kf);
