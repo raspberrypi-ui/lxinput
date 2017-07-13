@@ -38,6 +38,8 @@
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 
+#define DEFAULT_SES "LXDE-pi"
+
 static char* file = NULL;
 
 static GtkWidget *dlg;
@@ -63,7 +65,6 @@ static gboolean beep = TRUE, old_beep = TRUE;
 
 static GList *devs = NULL;
 
-
 static void reload_all_programs (void)
 {
     GdkEventClient event;
@@ -75,47 +76,38 @@ static void reload_all_programs (void)
     gdk_event_send_clientmessage_toall((GdkEvent *)&event);
 }
 
-static int get_dclick_time (void)
-{
-    FILE *fp;
-    char buf[256];
-    int val;
-    wordexp_t exp;
-    struct stat st;
-
-    // check to see if there is a gtkrc file in the home directory
-    wordexp ("~/.gtkrc-2.0", &exp, 0);
-    if (stat (exp.we_wordv[0], &st) != 0)
-    {
-        // there isn't - create one with default value
-        sprintf (buf, "echo gtk-double-click-time=250 > %s", exp.we_wordv[0]);
-        system (buf);
-        return 250;
-    }
-
-    // there is a file - does it contain a value?
-    fp = popen ("grep gtk-double-click-time ~/.gtkrc-2.0", "r");
-    if (fp == NULL) return 0;  // should never happen...
-    if (fgets (buf, sizeof (buf) - 1, fp) != NULL)
-    {
-        if (sscanf (buf, "gtk-double-click-time=%d", &val) == 1) return val;
-    }
-    pclose (fp);
-
-    // no matching parameter in file - prepend one
-	sprintf (buf, "sed -i \"1i gtk-double-click-time=250\" %s", exp.we_wordv[0]);
-    system (buf);
-    return 250;
-}
-
 static void set_dclick_time (int time)
 {
-    char cmdbuf[128];
+    const char *session_name;
+    char *user_config_file, *str;
+    char colbuf[128];
+    GKeyFile *kf;
+    gsize len;
 
-    dclick = time;
-	sprintf (cmdbuf, "sed -i s/gtk-double-click-time=[0-9]*/gtk-double-click-time=%d/g ~/.gtkrc-2.0", dclick);
-	system (cmdbuf);
-	reload_all_programs ();
+    // construct the file path
+    session_name = g_getenv ("DESKTOP_SESSION");
+    if (!session_name) session_name = DEFAULT_SES;
+    user_config_file = g_build_filename (g_get_user_config_dir (), "lxsession/", session_name, "/desktop.conf", NULL);
+
+    // read in data from file to a key file
+    kf = g_key_file_new ();
+    if (!g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
+    {
+        g_free (user_config_file);
+        return;
+    }
+
+    // update changed values in the key file
+    g_key_file_set_integer (kf, "GTK", "iNet/DoubleClickTime", time);
+
+    // write the modified key file out
+    str = g_key_file_to_data (kf, &len, NULL);
+    g_file_set_contents (user_config_file, str, len, NULL);
+
+    g_free (user_config_file);
+    g_free (str);
+
+    reload_all_programs ();
 }
 
 static void on_mouse_dclick_changed (GtkRange* range, gpointer user_data)
@@ -254,8 +246,7 @@ static void load_settings()
 {
     const char* session_name = g_getenv("DESKTOP_SESSION");
 	/* load settings from current session config files */
-    if(!session_name)
-        session_name = "LXDE";
+	if (!session_name) session_name = DEFAULT_SES;
 
     char* rel_path = g_strconcat("lxsession/", session_name, "/desktop.conf", NULL);
     char* user_config_file = g_build_filename(g_get_user_config_dir(), rel_path, NULL);
@@ -290,11 +281,13 @@ static void load_settings()
     if( g_key_file_has_key(kf, "Keyboard", "Beep", NULL ) )
         old_beep = beep = g_key_file_get_boolean(kf, "Keyboard", "Beep", NULL);
 
+    val = g_key_file_get_integer(kf, "GTK", "iNet/DoubleClickTime", NULL);
+    if(val > 0)
+        old_dclick = dclick = val;
+
     g_key_file_free(kf);
 
     g_free(user_config_file);
-
-    //old_dclick = dclick = get_dclick_time ();
 }
 
 void get_valid_mice (void)
@@ -365,7 +358,7 @@ int main(int argc, char** argv)
     mouse_accel = (GtkRange*)gtk_builder_get_object(builder,"mouse_accel");
     //mouse_threshold = (GtkRange*)gtk_builder_get_object(builder,"mouse_threshold");
     mouse_left_handed = (GtkToggleButton*)gtk_builder_get_object(builder,"left_handed");
-    //mouse_dclick = (GtkRange*)gtk_builder_get_object(builder, "mouse_dclick");
+    mouse_dclick = (GtkRange*)gtk_builder_get_object(builder, "mouse_dclick");
 
     kb_delay = (GtkRange*)gtk_builder_get_object(builder,"kb_delay");
     kb_interval = (GtkRange*)gtk_builder_get_object(builder,"kb_interval");
@@ -395,7 +388,7 @@ int main(int argc, char** argv)
     /* init the UI */
     gtk_range_set_value(mouse_accel, (facc + 1) * 5.0);
     //gtk_range_set_value(mouse_threshold, threshold);
-    //gtk_range_set_value(mouse_dclick, dclick);
+    gtk_range_set_value(mouse_dclick, dclick);
     gtk_toggle_button_set_active(mouse_left_handed, left_handed);
 
     gtk_range_set_value(kb_delay, delay);
@@ -407,7 +400,7 @@ int main(int argc, char** argv)
     //set_range_stops(mouse_threshold, 10);
     //g_signal_connect(mouse_threshold, "value-changed", G_CALLBACK(on_mouse_threshold_changed), NULL);
     g_signal_connect(mouse_left_handed, "toggled", G_CALLBACK(on_left_handed_toggle), NULL);
-    //g_signal_connect(mouse_dclick, "value-changed", G_CALLBACK(on_mouse_dclick_changed), NULL);
+    g_signal_connect(mouse_dclick, "value-changed", G_CALLBACK(on_mouse_dclick_changed), NULL);
 
     set_range_stops(kb_delay, 10);
     g_signal_connect(kb_delay, "value-changed", G_CALLBACK(on_kb_range_changed), &delay);
@@ -507,7 +500,7 @@ int main(int argc, char** argv)
         //XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), True, True,
         //                         accel, 10, threshold);
         set_left_handed_mouse();
-        //set_dclick_time (old_dclick);
+        set_dclick_time (old_dclick);
 
         char buf[256];
         facc = (old_facc / 5.0) - 1.0;
