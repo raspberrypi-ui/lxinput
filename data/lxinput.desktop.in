@@ -1,7 +1,8 @@
 [Desktop Entry]
 Type=Application
 _Name=Keyboard and Mouse
-Icon=input-keyboard
+Icon=preferences-desktop-peripherals
+TryExec=lxinput
 Exec=lxinput
 _Comment=Configure keyboard, mouse, and other input devices
 StartupNotify=true
