@@ -214,10 +214,10 @@ static const gchar* detect_keymap_program()
     const gchar *program = NULL;
 
     /*find if lxkeymap is in the path*/
-    program = "lxkeymap";
+    program = "rc_gui";
     if (g_find_program_in_path(program))
     {
-        return program;
+        return "env SUDO_ASKPASS=/usr/bin/pwdrcg.sh sudo -A rc_gui -k";
     }
     /*TODO
     Add other keymap executable*/
