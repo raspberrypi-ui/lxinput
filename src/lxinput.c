@@ -217,7 +217,7 @@ static const gchar* detect_keymap_program()
     program = "rc_gui";
     if (g_find_program_in_path(program))
     {
-        return "env SUDO_ASKPASS=/usr/bin/pwdrcg.sh sudo -A rc_gui -k";
+        return "env SUDO_ASKPASS=/usr/bin/pwdrcg.sh sudo -AE rc_gui -k";
     }
     /*TODO
     Add other keymap executable*/
