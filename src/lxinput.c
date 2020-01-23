@@ -370,9 +370,9 @@ static void layout_changed (GtkComboBox *cb, char *init_variant)
 
 static gpointer keyboard_thread (gpointer ptr)
 {
-    vsystem ("invoke-rc.d keyboard-setup start");
+    vsystem ("sudo invoke-rc.d keyboard-setup start");
     vsystem ("setsid sh -c 'exec setupcon -k --force <> /dev/tty1 >&0 2>&1'");
-    vsystem ("udevadm trigger --subsystem-match=input --action=change");
+    vsystem ("sudo udevadm trigger --subsystem-match=input --action=change");
     vsystem ("udevadm settle");
     vsystem (gbuffer);
     g_idle_add (close_msg, NULL);
