@@ -3,7 +3,7 @@ Type=Application
 _Name=Keyboard and Mouse
 Icon=preferences-desktop-peripherals
 TryExec=lxinput
-Exec=env SUDO_ASKPASS=/usr/lib/rc-gui/pwdlxi.sh sudo -AE lxinput
+Exec=env SUDO_ASKPASS=/usr/lib/rc-gui/pwdlxi.sh lxinput
 _Comment=Configure keyboard, mouse, and other input devices
 StartupNotify=true
 Terminal=false
