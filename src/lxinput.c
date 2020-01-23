@@ -371,7 +371,7 @@ static void layout_changed (GtkComboBox *cb, char *init_variant)
 static gpointer keyboard_thread (gpointer ptr)
 {
     vsystem ("sudo invoke-rc.d keyboard-setup start");
-    vsystem ("setsid sh -c 'exec setupcon -k --force <> /dev/tty1 >&0 2>&1'");
+    vsystem ("sudo setsid sh -c 'exec setupcon -k --force <> /dev/tty1 >&0 2>&1'");
     vsystem ("sudo udevadm trigger --subsystem-match=input --action=change");
     vsystem ("udevadm settle");
     vsystem (gbuffer);
@@ -494,7 +494,7 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
         gtk_tree_model_get (GTK_TREE_MODEL (model_list), &iter, 1, &new_mod, -1);
         if (g_strcmp0 (new_mod, init_model))
         {
-            vsystem ("grep -q XKBMODEL /etc/default/keyboard && sed -i 's/XKBMODEL=.*/XKBMODEL=%s/g' /etc/default/keyboard || echo 'XKBMODEL=%s' >> /etc/default/keyboard", new_mod, new_mod);
+            vsystem ("grep -q XKBMODEL /etc/default/keyboard && sudo sed -i 's/XKBMODEL=.*/XKBMODEL=%s/g' /etc/default/keyboard || sudo echo 'XKBMODEL=%s' >> /etc/default/keyboard", new_mod, new_mod);
             n = 1;
         }
 
@@ -502,7 +502,7 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
         gtk_tree_model_get (GTK_TREE_MODEL (layout_list), &iter, 1, &new_lay, -1);
         if (g_strcmp0 (new_lay, init_layout))
         {
-            vsystem ("grep -q XKBLAYOUT /etc/default/keyboard && sed -i 's/XKBLAYOUT=.*/XKBLAYOUT=%s/g' /etc/default/keyboard || echo 'XKBLAYOUT=%s' >> /etc/default/keyboard", new_lay, new_lay);
+            vsystem ("grep -q XKBLAYOUT /etc/default/keyboard && sudo sed -i 's/XKBLAYOUT=.*/XKBLAYOUT=%s/g' /etc/default/keyboard || sudo echo 'XKBLAYOUT=%s' >> /etc/default/keyboard", new_lay, new_lay);
             n = 1;
         }
 
@@ -510,7 +510,7 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
         gtk_tree_model_get (GTK_TREE_MODEL (variant_list), &iter, 1, &new_var, -1);
         if (g_strcmp0 (new_var, init_variant))
         {
-            vsystem ("grep -q XKBVARIANT /etc/default/keyboard && sed -i 's/XKBVARIANT=.*/XKBVARIANT=%s/g' /etc/default/keyboard || echo 'XKBVARIANT=%s' >> /etc/default/keyboard", new_var, new_var);
+            vsystem ("grep -q XKBVARIANT /etc/default/keyboard && sudo sed -i 's/XKBVARIANT=.*/XKBVARIANT=%s/g' /etc/default/keyboard || sudo echo 'XKBVARIANT=%s' >> /etc/default/keyboard", new_var, new_var);
             n = 1;
         }
 
