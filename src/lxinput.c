@@ -241,7 +241,7 @@ static int vsystem (const char *fmt, ...)
 static char *get_string (char *cmd)
 {
     char *line = NULL, *res = NULL;
-    int len = 0;
+    size_t len = 0;
     FILE *fp = popen (cmd, "r");
 
     if (fp == NULL) return NULL;
@@ -322,7 +322,8 @@ static void layout_changed (GtkComboBox *cb, char *init_variant)
     FILE *fp;
     GtkTreeIter iter;
     char *buffer, *cptr, *t1, *t2;
-    int siz, in_list;
+    size_t siz;
+    int in_list;
 
     // get the currently-set layout from the combo box
     gtk_combo_box_get_active_iter (GTK_COMBO_BOX (keylayout_cb), &iter);
@@ -383,7 +384,8 @@ static void read_keyboards (void)
 {
     FILE *fp;
     char *cptr, *t1, *t2;
-    int siz, in_list;
+    size_t siz;
+    int in_list;
     GtkTreeIter iter;
 
     // loop through lines in KeyboardNames file
