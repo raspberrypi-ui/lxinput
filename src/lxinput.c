@@ -772,7 +772,7 @@ int main(int argc, char** argv)
                                   _("LXInput autostart"),
                                   _("Setup keyboard and mouse using settings done in LXInput"),
                                   /* FIXME: how to setup left-handed mouse? */
-                                  accel, threshold, delay, interval,
+                                  accel, threshold, delay, 1000 / interval,
                                   beep ? "on" : "off",
                                   left_handed ? ";xmodmap -e \"pointer = 3 2 1\"" : "",
                                   mstr);
