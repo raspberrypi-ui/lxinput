@@ -23,7 +23,7 @@ msgstr "Setting keyboard - please wait..."
 
 #: ../src/lxinput.c:677
 msgid "Keyboard Layout..."
-msgstr "Keyboard layout"
+msgstr "Keyboard Layout..."
 
 #: ../src/lxinput.c:772
 msgid "LXInput autostart"
