@@ -1,119 +1,127 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Italian translations for lxinput package.
+# Copyright (C) 2020 THE lxinput'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lxinput package.
+# Emanuele Goldoni <emanuele.goldoni@gmail.com>, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: lxinput\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-15 20:06+0300\n"
-"PO-Revision-Date: 2015-08-17 01:28+0000\n"
-"Last-Translator: Anonymous Pootle User\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2020-04-29 11:25+0200\n"
+"PO-Revision-Date: 2020-04-29 12:12+0200\n"
+"Last-Translator: Emanuele Goldoni <emanuele.goldoni@gmail.com>\n"
 "Language: it\n"
+"Language-Team: Italian\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.7\n"
-"X-POOTLE-MTIME: 1439774939.812553\n"
+"X-Generator: Poedit 2.2.4\n"
 
-#: ../src/lxinput.c:351
+#. warn about a short delay...
+#: ../src/lxinput.c:528
+msgid "Setting keyboard - please wait..."
+msgstr "Impostazione tastiera - attendere..."
+
+#: ../src/lxinput.c:677
+msgid "Keyboard Layout..."
+msgstr "Disposizione tastiera..."
+
+#: ../src/lxinput.c:772
 msgid "LXInput autostart"
-msgstr ""
+msgstr "Avvia automaticamente LXInput"
 
-#: ../src/lxinput.c:352
+#: ../src/lxinput.c:773
 msgid "Setup keyboard and mouse using settings done in LXInput"
-msgstr ""
+msgstr "Configura tastiera e mouse usando le impostazioni di LXInput"
 
 #: ../data/lxinput.ui.h:1
-msgid "Input Device Preferences"
-msgstr "Impostazioni Dispositivi di Input"
+msgid "Mouse and Keyboard Settings"
+msgstr "Impostazioni mouse e tastiera"
 
 #: ../data/lxinput.ui.h:2
-msgid "Sensitivity:"
-msgstr "Sensibilità:"
-
-#: ../data/lxinput.ui.h:3
-msgid "High"
-msgstr "Alto"
-
-#: ../data/lxinput.ui.h:4
-msgid "Low"
-msgstr "Basso"
-
-#: ../data/lxinput.ui.h:5
-msgid "Fast"
-msgstr "Veloce"
-
-#: ../data/lxinput.ui.h:6
-msgid "Slow"
-msgstr "Lento"
-
-#: ../data/lxinput.ui.h:7
 msgid "Acceleration:"
 msgstr "Accelerazione:"
 
-#: ../data/lxinput.ui.h:8
-msgid "<b>Motion</b>"
-msgstr "<b>Movimento</b>"
+#: ../data/lxinput.ui.h:3
+msgid "Slow"
+msgstr "Lento"
 
-#: ../data/lxinput.ui.h:9
+#: ../data/lxinput.ui.h:4
+msgid "Fast"
+msgstr "Veloce"
+
+#: ../data/lxinput.ui.h:5
+msgid "Motion"
+msgstr "Movimento"
+
+#: ../data/lxinput.ui.h:6
 msgid "Left handed (Swap left and right mouse buttons)"
 msgstr "Mancino (inverti tasto destro e sinistro del mouse)"
 
-#: ../data/lxinput.ui.h:10
+#: ../data/lxinput.ui.h:7
+msgid "Delay:"
+msgstr "Ritardo:"
+
+#: ../data/lxinput.ui.h:8
+msgid "Double-click"
+msgstr "Doppio clic"
+
+#: ../data/lxinput.ui.h:9
 msgid "Mouse"
 msgstr "Mouse"
 
-#: ../data/lxinput.ui.h:11
+#: ../data/lxinput.ui.h:10
 msgid "Delay before each key starts repeating"
 msgstr "Attesa prima della ripetizione di ogni tasto"
 
-#: ../data/lxinput.ui.h:12
+#: ../data/lxinput.ui.h:11
 msgid "Repeat delay:"
 msgstr "Attesa ripetizione:"
 
-#: ../data/lxinput.ui.h:13
+#: ../data/lxinput.ui.h:12
 msgid "Interval between each key repeat"
 msgstr "Intervallo per la ripetizione di ogni tasto"
 
-#: ../data/lxinput.ui.h:14
+#: ../data/lxinput.ui.h:13
 msgid "Long"
 msgstr "Lungo"
 
-#: ../data/lxinput.ui.h:15
+#: ../data/lxinput.ui.h:14
 msgid "Short"
 msgstr "Corto"
 
-#: ../data/lxinput.ui.h:16
+#: ../data/lxinput.ui.h:15
 msgid "Repeat interval:"
 msgstr "Intervallo ripetizione:"
 
-#: ../data/lxinput.ui.h:17
+#: ../data/lxinput.ui.h:16
 msgid "Type in the following box to test your keyboard settings"
 msgstr "Scrivi in questo box per provare le impostazioni di tastiera"
 
-#: ../data/lxinput.ui.h:18
-msgid "<b>Character Repeat</b>"
-msgstr "<b>Ripetizione Caratteri</b>"
+#: ../data/lxinput.ui.h:17
+msgid "Character Repeat"
+msgstr "Ripetizione Caratteri"
 
-#: ../data/lxinput.ui.h:19
+#: ../data/lxinput.ui.h:18
 msgid "Beep when there is an error of keyboard input"
 msgstr "Emetti un beep per gli errori di input da tastiera"
 
-#: ../data/lxinput.ui.h:20
-msgid "<b>Keyboard layout</b>"
-msgstr "<b>Disposizione tastiera</b>"
-
-#: ../data/lxinput.ui.h:21
+#: ../data/lxinput.ui.h:19
 msgid "Keyboard"
 msgstr "Tastiera"
 
+#: ../data/lxinput.ui.h:20
+msgid "Model:"
+msgstr "Modello:"
+
+#: ../data/lxinput.ui.h:21
+msgid "Layout:"
+msgstr "Disposizione:"
+
 #: ../data/lxinput.ui.h:22
-msgid "Touch Pad"
-msgstr "Touch Pad"
+msgid "Variant:"
+msgstr "Variante:"
 
 #: ../data/lxinput.desktop.in.h:1
 msgid "Keyboard and Mouse"
@@ -122,3 +130,18 @@ msgstr "Tastiera e Mouse"
 #: ../data/lxinput.desktop.in.h:2
 msgid "Configure keyboard, mouse, and other input devices"
 msgstr "Configura tastiera, mouse, ed altri dispositivi di input"
+
+#~ msgid "Input Device Preferences"
+#~ msgstr "Impostazioni Dispositivi di Input"
+
+#~ msgid "Sensitivity:"
+#~ msgstr "Sensibilità:"
+
+#~ msgid "High"
+#~ msgstr "Alto"
+
+#~ msgid "Low"
+#~ msgstr "Basso"
+
+#~ msgid "Touch Pad"
+#~ msgstr "Touch Pad"
