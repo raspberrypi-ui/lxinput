@@ -1,0 +1,148 @@
+# Armenian translations for lxinput package.
+# Copyright (C) 2009 THE lxinput'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lxinput package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-04-29 11:25+0200\n"
+"PO-Revision-Date: 2020-04-29 01:28+0000\n"
+"Last-Translator: <info@armath.am>\n"
+"Language-Team: Armenian\n"
+"Language: hy\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. warn about a short delay...
+#: ../src/lxinput.c:528
+msgid "Setting keyboard - please wait..."
+msgstr "Ստեղնաշարի կարգավորում - խնդրում ենք սպասել..."
+
+#: ../src/lxinput.c:677
+msgid "Keyboard Layout..."
+msgstr "Ստեղնաշարի դասավորություն..."
+
+#: ../src/lxinput.c:772
+msgid "LXInput autostart"
+msgstr "LXInput ինքնամեկնարկ"
+
+#: ../src/lxinput.c:773
+msgid "Setup keyboard and mouse using settings done in LXInput"
+msgstr "Կարգավորել ստեղնաշարն ու մկնիկն օգտագործելով LXInput-ում արված կարգավորումները"
+
+#: ../data/lxinput.ui.h:1
+msgid "Mouse and Keyboard Settings"
+msgstr "Ստեղնաշարի ու մկնիկի կարգավորումներ"
+
+#: ../data/lxinput.ui.h:2
+msgid "Acceleration:"
+msgstr "Արագություն՝"
+
+#: ../data/lxinput.ui.h:3
+msgid "Slow"
+msgstr "Դանդաղ"
+
+#: ../data/lxinput.ui.h:4
+msgid "Fast"
+msgstr "Արագ"
+
+#: ../data/lxinput.ui.h:5
+msgid "Motion"
+msgstr "Շարժ"
+
+#: ../data/lxinput.ui.h:6
+msgid "Left handed (Swap left and right mouse buttons)"
+msgstr "Ձախլիկների համար (Տեղափոխել մկնիկի ձախ և աջ սեղմակները)"
+
+#: ../data/lxinput.ui.h:7
+msgid "Delay:"
+msgstr "Ուշացում՝"
+
+#: ../data/lxinput.ui.h:8
+msgid "Double-click"
+msgstr "Կրկնակի սեղմում"
+
+#: ../data/lxinput.ui.h:9
+msgid "Mouse"
+msgstr "Մկնիկ"
+
+#: ../data/lxinput.ui.h:10
+msgid "Delay before each key starts repeating"
+msgstr "Ուշացում, նախքան յուրաքանչյուր ստեղն սկսվում է կրկնել"
+
+#: ../data/lxinput.ui.h:11
+msgid "Repeat delay:"
+msgstr "Կրկնել ուշացումը՝"
+
+#: ../data/lxinput.ui.h:12
+msgid "Interval between each key repeat"
+msgstr "Յուրաքանչյուր առանցքային կրկնության միջակայք"
+
+#: ../data/lxinput.ui.h:13
+msgid "Long"
+msgstr "Երկար"
+
+#: ../data/lxinput.ui.h:14
+msgid "Short"
+msgstr "Կարճ"
+
+#: ../data/lxinput.ui.h:15
+msgid "Repeat interval:"
+msgstr "Կրկնել միջակայքերը՝"
+
+#: ../data/lxinput.ui.h:16
+msgid "Type in the following box to test your keyboard settings"
+msgstr "Մուտքագրեք այս վանդակում` ստեղնաշարի կարգավորումները ստուգելու համար"
+
+#: ../data/lxinput.ui.h:17
+msgid "Character Repeat"
+msgstr "Նիշերի կրկնություն"
+
+#: ../data/lxinput.ui.h:18
+msgid "Beep when there is an error of keyboard input"
+msgstr "Շչակել, երբ առկա է ստեղնաշարի մուտքի սխալ"
+
+#: ../data/lxinput.ui.h:19
+msgid "Keyboard"
+msgstr "Ստեղնաշար"
+
+#: ../data/lxinput.ui.h:20
+msgid "Model:"
+msgstr "Տեսակը՝"
+
+#: ../data/lxinput.ui.h:21
+msgid "Layout:"
+msgstr "Դասավորություն՝"
+
+#: ../data/lxinput.ui.h:22
+msgid "Variant:"
+msgstr "Տարբերակ՝"
+
+#: ../data/lxinput.desktop.in.h:1
+msgid "Keyboard and Mouse"
+msgstr "Մկնիկի և ստեղնաշարի կարգավորումներ"
+
+#: ../data/lxinput.desktop.in.h:2
+msgid "Configure keyboard, mouse, and other input devices"
+msgstr "Կարգաբերել մկնիկը, ստեղնաշարն ու այլ մուտքային սարքեր"
+
+#~ msgid "Input Device Preferences"
+#~ msgstr "Սարքի նախապատվությունները"
+
+#~ msgid "Sensitivity:"
+#~ msgstr "Զգայունություն՝"
+
+#~ msgid "High"
+#~ msgstr "Բարձր"
+
+#~ msgid "Low"
+#~ msgstr "Ցածր"
+
+#~ msgid "Touch Pad"
+#~ msgstr "Թաչփադ"
+
+#~ msgid "input-keyboard"
+#~ msgstr "Ստեղնաշար"
