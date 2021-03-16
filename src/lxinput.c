@@ -53,7 +53,7 @@ static GtkRange *kb_interval;
 static GtkToggleButton* kb_beep;
 static GtkButton* kb_layout;
 static GtkLabel* kb_layout_label;
-static GObject *keymodel_cb, *keylayout_cb, *keyvar_cb;
+static GtkWidget *keymodel_cb, *keylayout_cb, *keyvar_cb;
 static GtkWidget *msg_dlg;
 
 static int accel = 20, old_accel = 20;
@@ -373,7 +373,7 @@ static char *get_string (char *cmd)
     return res;
 }
 
-static void set_init (GtkTreeModel *model, GObject *cb, int pos, char *init)
+static void set_init (GtkTreeModel *model, GtkWidget *cb, int pos, char *init)
 {
     GtkTreeIter iter;
     char *val;
@@ -565,10 +565,12 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     kdlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
     gtk_window_set_transient_for (GTK_WINDOW (kdlg), GTK_WINDOW (dlg));
 
-    GtkWidget *table = (GtkWidget *) gtk_builder_get_object (builder, "keytable");
-    keymodel_cb = (GObject *) gtk_combo_box_new_with_model (GTK_TREE_MODEL (model_list));
-    keylayout_cb = (GObject *) gtk_combo_box_new_with_model (GTK_TREE_MODEL (layout_list));
-    keyvar_cb = (GObject *) gtk_combo_box_new_with_model (GTK_TREE_MODEL (variant_list));
+    keymodel_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbmodel");
+    keylayout_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycblayout");
+    keyvar_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbvar");
+    gtk_combo_box_set_model (GTK_COMBO_BOX (keymodel_cb), GTK_TREE_MODEL (model_list));
+    gtk_combo_box_set_model (GTK_COMBO_BOX (keylayout_cb), GTK_TREE_MODEL (layout_list));
+    gtk_combo_box_set_model (GTK_COMBO_BOX (keyvar_cb), GTK_TREE_MODEL (variant_list));
 
     col = gtk_cell_renderer_text_new ();
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (keymodel_cb), col, FALSE);
@@ -577,13 +579,6 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (keylayout_cb), col, "text", 0);
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (keyvar_cb), col, FALSE);
     gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (keyvar_cb), col, "text", 0);
-
-    gtk_table_attach (GTK_TABLE (table), GTK_WIDGET (keymodel_cb), 1, 2, 0, 1, GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 0, 0);
-    gtk_table_attach (GTK_TABLE (table), GTK_WIDGET (keylayout_cb), 1, 2, 1, 2, GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 0, 0);
-    gtk_table_attach (GTK_TABLE (table), GTK_WIDGET (keyvar_cb), 1, 2, 2, 3, GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 0, 0);
-    gtk_widget_show_all (GTK_WIDGET (keymodel_cb));
-    gtk_widget_show_all (GTK_WIDGET (keylayout_cb));
-    gtk_widget_show_all (GTK_WIDGET (keyvar_cb));
 
     // get the current keyboard settings
     init_model = get_string ("grep XKBMODEL /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
