@@ -77,6 +77,119 @@ GThread *pthread;
 
 GtkListStore *model_list, *layout_list, *variant_list;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+
+/* Client message code copied from GTK+2 */
+
+typedef struct _GdkEventClient GdkEventClient;
+
+struct _GdkEventClient
+{
+    GdkEventType type;
+    GdkWindow *window;
+    gint8 send_event;
+    GdkAtom message_type;
+    gushort data_format;
+    union {
+        char b[20];
+        short s[10];
+        long l[5];
+    } data;
+};
+
+gint _gdk_send_xevent (GdkDisplay *display, Window window, gboolean propagate, glong event_mask, XEvent *event_send)
+{
+    gboolean result;
+
+    if (gdk_display_is_closed (display)) return FALSE;
+
+    gdk_x11_display_error_trap_push (display);
+    result = XSendEvent (GDK_DISPLAY_XDISPLAY (display), window, propagate, event_mask, event_send);
+    XSync (GDK_DISPLAY_XDISPLAY (display), False);
+    if (gdk_x11_display_error_trap_pop (display)) return FALSE;
+
+    return result;
+}
+
+/* Sends a ClientMessage to all toplevel client windows */
+static gboolean gdk_event_send_client_message_to_all_recurse (GdkDisplay *display, XEvent *xev, guint32 xid, guint level)
+{
+    Atom type = None;
+    int format;
+    unsigned long nitems, after;
+    unsigned char *data;
+    Window *ret_children, ret_root, ret_parent;
+    unsigned int ret_nchildren;
+    gboolean send = FALSE;
+    gboolean found = FALSE;
+    gboolean result = FALSE;
+    int i;
+
+    gdk_x11_display_error_trap_push (display);
+
+    if (XGetWindowProperty (GDK_DISPLAY_XDISPLAY (display), xid, 
+        gdk_x11_get_xatom_by_name_for_display (display, "WM_STATE"),
+        0, 0, False, AnyPropertyType, &type, &format, &nitems, &after, &data) != Success)
+            goto out;
+
+    if (type)
+    {
+        send = TRUE;
+        XFree (data);
+    }
+    else
+    {
+        /* OK, we're all set, now let's find some windows to send this to */
+        if (!XQueryTree (GDK_DISPLAY_XDISPLAY (display), xid, &ret_root, &ret_parent, &ret_children, &ret_nchildren))	
+            goto out;
+
+        for (i = 0; i < ret_nchildren; i++)
+            if (gdk_event_send_client_message_to_all_recurse (display, xev, ret_children[i], level + 1))
+                found = TRUE;
+
+        XFree (ret_children);
+    }
+
+    if (send || (!found && (level == 1)))
+    {
+        xev->xclient.window = xid;
+        _gdk_send_xevent (display, xid, False, NoEventMask, xev);
+    }
+
+    result = send || found;
+
+    out:
+        gdk_x11_display_error_trap_pop (display);
+
+    return result;
+}
+
+void gdk_screen_broadcast_client_message (GdkScreen *screen, GdkEventClient *event)
+{
+    XEvent sev;
+    GdkWindow *root_window;
+
+    g_return_if_fail (event != NULL);
+
+    root_window = gdk_screen_get_root_window (screen);
+
+    /* Set up our event to send, with the exception of its target window */
+    sev.xclient.type = ClientMessage;
+    sev.xclient.display = GDK_WINDOW_XDISPLAY (root_window);
+    sev.xclient.format = event->data_format;
+    memcpy(&sev.xclient.data, &event->data, sizeof (sev.xclient.data));
+    sev.xclient.message_type = gdk_x11_atom_to_xatom_for_display (gdk_screen_get_display (screen), event->message_type);
+
+    gdk_event_send_client_message_to_all_recurse (gdk_screen_get_display (screen), &sev, GDK_WINDOW_XID (root_window), 0);
+}
+
+void gdk_event_send_clientmessage_toall (GdkEvent *event)
+{
+    g_return_if_fail (event != NULL);
+    gdk_screen_broadcast_client_message (gdk_screen_get_default (), (GdkEventClient *) event);
+}
+
+#endif
 
 static void reload_all_programs (void)
 {
@@ -662,7 +775,7 @@ int main(int argc, char** argv)
 
     gtk_builder_add_from_file( builder, PACKAGE_DATA_DIR "/lxinput.ui", NULL );
     dlg = (GtkWidget*)gtk_builder_get_object( builder, "dlg" );
-    gtk_dialog_set_alternative_button_order( (GtkDialog*)dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1 );
+    //gtk_dialog_set_alternative_button_order( (GtkDialog*)dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1 );
 
     mouse_accel = (GtkRange*)gtk_builder_get_object(builder,"mouse_accel");
     //mouse_threshold = (GtkRange*)gtk_builder_get_object(builder,"mouse_threshold");
