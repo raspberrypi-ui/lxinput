@@ -403,24 +403,24 @@ static void set_init (GtkTreeModel *model, GtkWidget *cb, int pos, char *init)
 
 static void message (char *msg)
 {
-    GdkColor col;
     GtkWidget *wid;
-    GtkBuilder *builder = gtk_builder_new ();
-    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/lxinput.ui", NULL);
+    GtkBuilder *builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/lxinput.ui");
 
-    msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "msg");
+    msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
     gtk_window_set_transient_for (GTK_WINDOW (msg_dlg), GTK_WINDOW (dlg));
 
-    wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_eb");
-    gdk_color_parse ("#FFFFFF", &col);
-    gtk_widget_modify_bg (wid, GTK_STATE_NORMAL, &col);
-
-    wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
     gtk_label_set_text (GTK_LABEL (wid), msg);
 
-    wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_bb");
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
+    gtk_widget_hide (wid);
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_cancel");
+    gtk_widget_hide (wid);
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
+    gtk_widget_hide (wid);
 
-    gtk_widget_show_all (msg_dlg);
+    gtk_widget_show (msg_dlg);
+
     g_object_unref (builder);
 }
 
@@ -560,8 +560,7 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     read_keyboards ();
 
     // build the dialog and attach the combo boxes
-    builder = gtk_builder_new ();
-    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/lxinput.ui", NULL);
+    builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/lxinput.ui");
     kdlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
     gtk_window_set_transient_for (GTK_WINDOW (kdlg), GTK_WINDOW (dlg));
 
@@ -766,9 +765,7 @@ int main(int argc, char** argv)
     gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
     /* build the UI */
-    builder = gtk_builder_new();
-
-    gtk_builder_add_from_file( builder, PACKAGE_DATA_DIR "/lxinput.ui", NULL );
+    builder = gtk_builder_new_from_file( PACKAGE_DATA_DIR "/lxinput.ui" );
     dlg = (GtkWidget*)gtk_builder_get_object( builder, "dlg" );
     //gtk_dialog_set_alternative_button_order( (GtkDialog*)dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1 );
 
