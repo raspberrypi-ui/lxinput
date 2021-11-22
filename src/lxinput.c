@@ -53,7 +53,7 @@ static GtkRange *kb_interval;
 static GtkToggleButton* kb_beep;
 static GtkButton* kb_layout;
 static GtkLabel* kb_layout_label;
-static GObject *keymodel_cb, *keylayout_cb, *keyvar_cb;
+static GtkWidget *keymodel_cb, *keylayout_cb, *keyvar_cb;
 static GtkWidget *msg_dlg;
 
 static int accel = 20, old_accel = 20;
@@ -77,6 +77,119 @@ GThread *pthread;
 
 GtkListStore *model_list, *layout_list, *variant_list;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+
+/* Client message code copied from GTK+2 */
+
+typedef struct _GdkEventClient GdkEventClient;
+
+struct _GdkEventClient
+{
+    GdkEventType type;
+    GdkWindow *window;
+    gint8 send_event;
+    GdkAtom message_type;
+    gushort data_format;
+    union {
+        char b[20];
+        short s[10];
+        long l[5];
+    } data;
+};
+
+gint _gdk_send_xevent (GdkDisplay *display, Window window, gboolean propagate, glong event_mask, XEvent *event_send)
+{
+    gboolean result;
+
+    if (gdk_display_is_closed (display)) return FALSE;
+
+    gdk_x11_display_error_trap_push (display);
+    result = XSendEvent (GDK_DISPLAY_XDISPLAY (display), window, propagate, event_mask, event_send);
+    XSync (GDK_DISPLAY_XDISPLAY (display), False);
+    if (gdk_x11_display_error_trap_pop (display)) return FALSE;
+
+    return result;
+}
+
+/* Sends a ClientMessage to all toplevel client windows */
+static gboolean gdk_event_send_client_message_to_all_recurse (GdkDisplay *display, XEvent *xev, guint32 xid, guint level)
+{
+    Atom type = None;
+    int format;
+    unsigned long nitems, after;
+    unsigned char *data;
+    Window *ret_children, ret_root, ret_parent;
+    unsigned int ret_nchildren;
+    gboolean send = FALSE;
+    gboolean found = FALSE;
+    gboolean result = FALSE;
+    int i;
+
+    gdk_x11_display_error_trap_push (display);
+
+    if (XGetWindowProperty (GDK_DISPLAY_XDISPLAY (display), xid, 
+        gdk_x11_get_xatom_by_name_for_display (display, "WM_STATE"),
+        0, 0, False, AnyPropertyType, &type, &format, &nitems, &after, &data) != Success)
+            goto out;
+
+    if (type)
+    {
+        send = TRUE;
+        XFree (data);
+    }
+    else
+    {
+        /* OK, we're all set, now let's find some windows to send this to */
+        if (!XQueryTree (GDK_DISPLAY_XDISPLAY (display), xid, &ret_root, &ret_parent, &ret_children, &ret_nchildren))	
+            goto out;
+
+        for (i = 0; i < ret_nchildren; i++)
+            if (gdk_event_send_client_message_to_all_recurse (display, xev, ret_children[i], level + 1))
+                found = TRUE;
+
+        XFree (ret_children);
+    }
+
+    if (send || (!found && (level == 1)))
+    {
+        xev->xclient.window = xid;
+        _gdk_send_xevent (display, xid, False, NoEventMask, xev);
+    }
+
+    result = send || found;
+
+    out:
+        gdk_x11_display_error_trap_pop (display);
+
+    return result;
+}
+
+void gdk_screen_broadcast_client_message (GdkScreen *screen, GdkEventClient *event)
+{
+    XEvent sev;
+    GdkWindow *root_window;
+
+    g_return_if_fail (event != NULL);
+
+    root_window = gdk_screen_get_root_window (screen);
+
+    /* Set up our event to send, with the exception of its target window */
+    sev.xclient.type = ClientMessage;
+    sev.xclient.display = GDK_WINDOW_XDISPLAY (root_window);
+    sev.xclient.format = event->data_format;
+    memcpy(&sev.xclient.data, &event->data, sizeof (sev.xclient.data));
+    sev.xclient.message_type = gdk_x11_atom_to_xatom_for_display (gdk_screen_get_display (screen), event->message_type);
+
+    gdk_event_send_client_message_to_all_recurse (gdk_screen_get_display (screen), &sev, GDK_WINDOW_XID (root_window), 0);
+}
+
+void gdk_event_send_clientmessage_toall (GdkEvent *event)
+{
+    g_return_if_fail (event != NULL);
+    gdk_screen_broadcast_client_message (gdk_screen_get_default (), (GdkEventClient *) event);
+}
+
+#endif
 
 static void reload_all_programs (void)
 {
@@ -260,7 +373,7 @@ static char *get_string (char *cmd)
     return res;
 }
 
-static void set_init (GtkTreeModel *model, GObject *cb, int pos, char *init)
+static void set_init (GtkTreeModel *model, GtkWidget *cb, int pos, char *init)
 {
     GtkTreeIter iter;
     char *val;
@@ -290,24 +403,24 @@ static void set_init (GtkTreeModel *model, GObject *cb, int pos, char *init)
 
 static void message (char *msg)
 {
-    GdkColor col;
     GtkWidget *wid;
-    GtkBuilder *builder = gtk_builder_new ();
-    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/lxinput.ui", NULL);
+    GtkBuilder *builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/lxinput.ui");
 
-    msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "msg");
+    msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
     gtk_window_set_transient_for (GTK_WINDOW (msg_dlg), GTK_WINDOW (dlg));
 
-    wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_eb");
-    gdk_color_parse ("#FFFFFF", &col);
-    gtk_widget_modify_bg (wid, GTK_STATE_NORMAL, &col);
-
-    wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
     gtk_label_set_text (GTK_LABEL (wid), msg);
 
-    wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_bb");
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
+    gtk_widget_hide (wid);
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_cancel");
+    gtk_widget_hide (wid);
+    wid = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
+    gtk_widget_hide (wid);
 
-    gtk_widget_show_all (msg_dlg);
+    gtk_widget_show (msg_dlg);
+
     g_object_unref (builder);
 }
 
@@ -447,15 +560,16 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     read_keyboards ();
 
     // build the dialog and attach the combo boxes
-    builder = gtk_builder_new ();
-    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/lxinput.ui", NULL);
+    builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/lxinput.ui");
     kdlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
     gtk_window_set_transient_for (GTK_WINDOW (kdlg), GTK_WINDOW (dlg));
 
-    GtkWidget *table = (GtkWidget *) gtk_builder_get_object (builder, "keytable");
-    keymodel_cb = (GObject *) gtk_combo_box_new_with_model (GTK_TREE_MODEL (model_list));
-    keylayout_cb = (GObject *) gtk_combo_box_new_with_model (GTK_TREE_MODEL (layout_list));
-    keyvar_cb = (GObject *) gtk_combo_box_new_with_model (GTK_TREE_MODEL (variant_list));
+    keymodel_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbmodel");
+    keylayout_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycblayout");
+    keyvar_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbvar");
+    gtk_combo_box_set_model (GTK_COMBO_BOX (keymodel_cb), GTK_TREE_MODEL (model_list));
+    gtk_combo_box_set_model (GTK_COMBO_BOX (keylayout_cb), GTK_TREE_MODEL (layout_list));
+    gtk_combo_box_set_model (GTK_COMBO_BOX (keyvar_cb), GTK_TREE_MODEL (variant_list));
 
     col = gtk_cell_renderer_text_new ();
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (keymodel_cb), col, FALSE);
@@ -464,13 +578,6 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (keylayout_cb), col, "text", 0);
     gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (keyvar_cb), col, FALSE);
     gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (keyvar_cb), col, "text", 0);
-
-    gtk_table_attach (GTK_TABLE (table), GTK_WIDGET (keymodel_cb), 1, 2, 0, 1, GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 0, 0);
-    gtk_table_attach (GTK_TABLE (table), GTK_WIDGET (keylayout_cb), 1, 2, 1, 2, GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 0, 0);
-    gtk_table_attach (GTK_TABLE (table), GTK_WIDGET (keyvar_cb), 1, 2, 2, 3, GTK_FILL | GTK_SHRINK, GTK_FILL | GTK_SHRINK, 0, 0);
-    gtk_widget_show_all (GTK_WIDGET (keymodel_cb));
-    gtk_widget_show_all (GTK_WIDGET (keylayout_cb));
-    gtk_widget_show_all (GTK_WIDGET (keyvar_cb));
 
     // get the current keyboard settings
     init_model = get_string ("grep XKBMODEL /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
@@ -658,11 +765,9 @@ int main(int argc, char** argv)
     gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
     /* build the UI */
-    builder = gtk_builder_new();
-
-    gtk_builder_add_from_file( builder, PACKAGE_DATA_DIR "/lxinput.ui", NULL );
+    builder = gtk_builder_new_from_file( PACKAGE_DATA_DIR "/lxinput.ui" );
     dlg = (GtkWidget*)gtk_builder_get_object( builder, "dlg" );
-    gtk_dialog_set_alternative_button_order( (GtkDialog*)dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1 );
+    //gtk_dialog_set_alternative_button_order( (GtkDialog*)dlg, GTK_RESPONSE_OK, GTK_RESPONSE_CANCEL, -1 );
 
     mouse_accel = (GtkRange*)gtk_builder_get_object(builder,"mouse_accel");
     //mouse_threshold = (GtkRange*)gtk_builder_get_object(builder,"mouse_threshold");
