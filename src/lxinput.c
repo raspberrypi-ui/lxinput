@@ -718,7 +718,7 @@ void get_valid_mice (void)
     {
         cptr = buf + strlen (buf) - 1;
         while (*cptr == ' ' || *cptr == '\n') *cptr-- = 0;
-        sprintf (cmd, "xinput list-props \"pointer:%s\" | grep -q \"Accel Speed\"", buf);
+        sprintf (cmd, "xinput list-props \"pointer:%s\" 2>/dev/null | grep -q \"Accel Speed\"", buf);
         fp2 = popen (cmd, "r");
         if (!pclose (fp2)) devs = g_list_append (devs, g_strdup (buf));
     }
@@ -727,15 +727,23 @@ void get_valid_mice (void)
 
 void read_mouse_speed (void)
 {
-    char buf[128];
+    FILE *fp;
+    char *cmd, buf[20];
     float val;
-    FILE *fp = popen ("grep -Po \"Accel Speed\\\" [-.0-9]*\" ~/.config/autostart/LXinput-setup.desktop | head -1 | cut -f 3 -d ' '", "r");
-    if (fp == NULL) return;
-    if (fgets (buf, sizeof (buf) - 1, fp))
+
+    if (devs != NULL)
     {
-        if (sscanf (buf, "%f", &val) == 1) facc = old_facc = val;
+        cmd = g_strdup_printf ("xinput list-props \"pointer:%s\" | grep \"Accel Speed\" | head -n 1 | cut -f 3", devs->data);
+        if (fp = popen (cmd, "r"))
+        {
+            if (fgets (buf, sizeof (buf) - 1, fp))
+            {
+                if (sscanf (buf, "%f", &val) == 1) facc = old_facc = val;
+            }
+            pclose (fp);
+        }
+        g_free (cmd);
     }
-    pclose (fp);
 }
 
 int main(int argc, char** argv)
