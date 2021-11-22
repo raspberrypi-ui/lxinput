@@ -205,7 +205,7 @@ static void reload_all_programs (void)
 static void set_dclick_time (int time)
 {
     const char *session_name;
-    char *user_config_file, *str, *fname;
+    char *user_config_file, *str, *fname, *scf;
     char cmdbuf[256];
     GKeyFile *kf;
     gsize len;
@@ -219,8 +219,14 @@ static void set_dclick_time (int time)
     kf = g_key_file_new ();
     if (!g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
     {
-        g_free (user_config_file);
-        return;
+        // create the local config directory
+        scf = g_path_get_dirname (user_config_file);
+        g_mkdir_with_parents (scf, 0700);
+        g_free (scf);
+        // load the global config
+        scf = g_build_filename ("/etc/xdg/lxsession/", session_name, "/desktop.conf", NULL);
+        g_key_file_load_from_file (kf, scf, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
+        g_free (scf);
     }
 
     // update changed values in the key file
