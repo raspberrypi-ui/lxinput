@@ -65,6 +65,7 @@ static float facc = 0.0, old_facc = 0.0;
 static int delay = 500, old_delay = 500;
 static int interval = 30, old_interval = 30;
 static gboolean beep = TRUE, old_beep = TRUE;
+static guint dctimer = 0;
 
 static GList *devs = NULL;
 
@@ -205,7 +206,7 @@ static void reload_all_programs (void)
 static void set_dclick_time (int time)
 {
     const char *session_name;
-    char *user_config_file, *str, *fname;
+    char *user_config_file, *str, *fname, *scf;
     char cmdbuf[256];
     GKeyFile *kf;
     gsize len;
@@ -219,8 +220,14 @@ static void set_dclick_time (int time)
     kf = g_key_file_new ();
     if (!g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
     {
-        g_free (user_config_file);
-        return;
+        // create the local config directory
+        scf = g_path_get_dirname (user_config_file);
+        g_mkdir_with_parents (scf, 0700);
+        g_free (scf);
+        // load the global config
+        scf = g_build_filename ("/etc/xdg/lxsession/", session_name, "/desktop.conf", NULL);
+        g_key_file_load_from_file (kf, scf, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
+        g_free (scf);
     }
 
     // update changed values in the key file
@@ -233,21 +240,20 @@ static void set_dclick_time (int time)
     g_free (user_config_file);
     g_free (str);
 
-    // update the openbox double-click as well
-    fname = g_strconcat (g_ascii_strdown (session_name, -1), "-rc.xml", NULL);
-    user_config_file = g_build_filename (g_get_user_config_dir (), "openbox/", fname, NULL);
-    g_free (fname);
-    sprintf (cmdbuf, "sed -i s#'<doubleClickTime>[0-9]*</doubleClickTime>'#'<doubleClickTime>%d</doubleClickTime>'#g %s", time, user_config_file);
-    system (cmdbuf);
-    g_free (user_config_file);
-    system ("openbox --reconfigure");
-
     reload_all_programs ();
+}
+
+static gboolean dclick_handler (gpointer data)
+{
+    set_dclick_time ((int) data);
+    dctimer = 0;
+    return FALSE;
 }
 
 static void on_mouse_dclick_changed (GtkRange* range, gpointer user_data)
 {
-    set_dclick_time ((int) gtk_range_get_value (range));
+    if (dctimer) g_source_remove (dctimer);
+    dctimer = g_timeout_add (500, dclick_handler, (gpointer) ((int) gtk_range_get_value (range)));
 }
 
 static void on_mouse_accel_changed(GtkRange* range, gpointer user_data)
@@ -718,7 +724,7 @@ void get_valid_mice (void)
     {
         cptr = buf + strlen (buf) - 1;
         while (*cptr == ' ' || *cptr == '\n') *cptr-- = 0;
-        sprintf (cmd, "xinput list-props \"pointer:%s\" | grep -q \"Accel Speed\"", buf);
+        sprintf (cmd, "xinput list-props \"pointer:%s\" 2>/dev/null | grep -q \"Accel Speed\"", buf);
         fp2 = popen (cmd, "r");
         if (!pclose (fp2)) devs = g_list_append (devs, g_strdup (buf));
     }
@@ -727,15 +733,23 @@ void get_valid_mice (void)
 
 void read_mouse_speed (void)
 {
-    char buf[128];
+    FILE *fp;
+    char *cmd, buf[20];
     float val;
-    FILE *fp = popen ("grep -Po \"Accel Speed\\\" [-.0-9]*\" ~/.config/autostart/LXinput-setup.desktop | head -1 | cut -f 3 -d ' '", "r");
-    if (fp == NULL) return;
-    if (fgets (buf, sizeof (buf) - 1, fp))
+
+    if (devs != NULL)
     {
-        if (sscanf (buf, "%f", &val) == 1) facc = old_facc = val;
+        cmd = g_strdup_printf ("xinput list-props \"pointer:%s\" | grep \"Accel Speed\" | head -n 1 | cut -f 3", devs->data);
+        if (fp = popen (cmd, "r"))
+        {
+            if (fgets (buf, sizeof (buf) - 1, fp))
+            {
+                if (sscanf (buf, "%f", &val) == 1) facc = old_facc = val;
+            }
+            pclose (fp);
+        }
+        g_free (cmd);
     }
-    pclose (fp);
 }
 
 int main(int argc, char** argv)
