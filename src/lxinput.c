@@ -65,6 +65,7 @@ static float facc = 0.0, old_facc = 0.0;
 static int delay = 500, old_delay = 500;
 static int interval = 30, old_interval = 30;
 static gboolean beep = TRUE, old_beep = TRUE;
+static guint dctimer = 0;
 
 static GList *devs = NULL;
 
@@ -242,9 +243,17 @@ static void set_dclick_time (int time)
     reload_all_programs ();
 }
 
+static gboolean dclick_handler (gpointer data)
+{
+    set_dclick_time ((int) data);
+    dctimer = 0;
+    return FALSE;
+}
+
 static void on_mouse_dclick_changed (GtkRange* range, gpointer user_data)
 {
-    set_dclick_time ((int) gtk_range_get_value (range));
+    if (dctimer) g_source_remove (dctimer);
+    dctimer = g_timeout_add (500, dclick_handler, (gpointer) ((int) gtk_range_get_value (range)));
 }
 
 static void on_mouse_accel_changed(GtkRange* range, gpointer user_data)
