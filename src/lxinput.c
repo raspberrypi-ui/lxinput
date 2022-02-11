@@ -314,11 +314,30 @@ static void on_mouse_threshold_changed(GtkRange* range, gpointer user_data)
                              0, 10, threshold);
 }
 
-static void on_kb_range_changed(GtkRange* range, int* val)
+static void set_kbd_rates (void)
 {
-    *val = (int)gtk_range_get_value(range);
+    char buf[256];
+
     /* apply keyboard values */
     XkbSetAutoRepeatRate(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), XkbUseCoreKbd, delay, interval);
+    sprintf (buf, "gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval %d", interval);
+    system (buf);
+    sprintf (buf, "gsettings set org.gnome.desktop.peripherals.keyboard delay %d", delay);
+    system (buf);
+}
+
+static gboolean kbd_handler (gpointer data)
+{
+    set_kbd_rates ();
+    matimer = 0;
+    return FALSE;
+}
+
+static void on_kb_range_changed (GtkRange* range, int *val)
+{
+    if (matimer) g_source_remove (matimer);
+    *val = (int) gtk_range_get_value (range);
+    matimer = g_timeout_add (500, kbd_handler, NULL);
 }
 
 /* This function is taken from Gnome's control-center 2.6.0.3 (gnome-settings-mouse.c) and was modified*/
