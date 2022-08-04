@@ -697,7 +697,6 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
 
             // launch a thread with the system call to update the keyboard
             pthread = g_thread_new (NULL, keyboard_thread, NULL);
-            if (ptr != NULL) gtk_dialog_run (GTK_DIALOG (msg_dlg));
         }
     }
 
