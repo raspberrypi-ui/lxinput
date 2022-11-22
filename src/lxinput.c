@@ -83,6 +83,42 @@ GThread *pthread;
 
 GtkListStore *model_list, *layout_list, *variant_list;
 
+static int vsystem (const char *fmt, ...)
+{
+    char *cmdline;
+    int res;
+
+    va_list arg;
+    va_start (arg, fmt);
+    g_vasprintf (&cmdline, fmt, arg);
+    va_end (arg);
+    res = system (cmdline);
+    g_free (cmdline);
+    return res;
+}
+
+static char *get_string (char *cmd)
+{
+    char *line = NULL, *res = NULL;
+    size_t len = 0;
+    FILE *fp = popen (cmd, "r");
+
+    if (fp == NULL) return NULL;
+    if (getline (&line, &len, fp) > 0)
+    {
+        res = line;
+        while (*res)
+        {
+            if (g_ascii_isspace (*res)) *res = 0;
+            res++;
+        }
+        res = g_strdup (line);
+    }
+    pclose (fp);
+    g_free (line);
+    return res;
+}
+
 char *update_facc_str (void)
 {
     char *oldloc = setlocale (LC_NUMERIC, NULL);
@@ -235,36 +271,40 @@ static void set_dclick_time (int time)
     GKeyFile *kf;
     gsize len;
 
-    // construct the file path
-    session_name = g_getenv ("DESKTOP_SESSION");
-    if (!session_name) session_name = DEFAULT_SES;
-    user_config_file = g_build_filename (g_get_user_config_dir (), "lxsession/", session_name, "/desktop.conf", NULL);
-
-    // read in data from file to a key file
-    kf = g_key_file_new ();
-    if (!g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
+    if (wayfire) vsystem ("gsettings set org.gnome.settings-daemon.peripherals.mouse double-click %d", time);
+    else
     {
-        // create the local config directory
-        scf = g_path_get_dirname (user_config_file);
-        g_mkdir_with_parents (scf, 0700);
-        g_free (scf);
-        // load the global config
-        scf = g_build_filename ("/etc/xdg/lxsession/", session_name, "/desktop.conf", NULL);
-        g_key_file_load_from_file (kf, scf, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
-        g_free (scf);
+        // construct the file path
+        session_name = g_getenv ("DESKTOP_SESSION");
+        if (!session_name) session_name = DEFAULT_SES;
+        user_config_file = g_build_filename (g_get_user_config_dir (), "lxsession/", session_name, "/desktop.conf", NULL);
+
+        // read in data from file to a key file
+        kf = g_key_file_new ();
+        if (!g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
+        {
+            // create the local config directory
+            scf = g_path_get_dirname (user_config_file);
+            g_mkdir_with_parents (scf, 0700);
+            g_free (scf);
+            // load the global config
+            scf = g_build_filename ("/etc/xdg/lxsession/", session_name, "/desktop.conf", NULL);
+            g_key_file_load_from_file (kf, scf, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
+            g_free (scf);
+        }
+
+        // update changed values in the key file
+        g_key_file_set_integer (kf, "GTK", "iNet/DoubleClickTime", time);
+
+        // write the modified key file out
+        str = g_key_file_to_data (kf, &len, NULL);
+        g_file_set_contents (user_config_file, str, len, NULL);
+
+        g_free (user_config_file);
+        g_free (str);
+
+        reload_all_programs ();
     }
-
-    // update changed values in the key file
-    g_key_file_set_integer (kf, "GTK", "iNet/DoubleClickTime", time);
-
-    // write the modified key file out
-    str = g_key_file_to_data (kf, &len, NULL);
-    g_file_set_contents (user_config_file, str, len, NULL);
-
-    g_free (user_config_file);
-    g_free (str);
-
-    reload_all_programs ();
 }
 
 static gboolean dclick_handler (gpointer data)
@@ -471,42 +511,6 @@ static gboolean on_change_val(GtkRange *range, GtkScrollType scroll,
 */
 
 /* Keyboard setting */
-
-static int vsystem (const char *fmt, ...)
-{
-    char *cmdline;
-    int res;
-
-    va_list arg;
-    va_start (arg, fmt);
-    g_vasprintf (&cmdline, fmt, arg);
-    va_end (arg);
-    res = system (cmdline);
-    g_free (cmdline);
-    return res;
-}
-
-static char *get_string (char *cmd)
-{
-    char *line = NULL, *res = NULL;
-    size_t len = 0;
-    FILE *fp = popen (cmd, "r");
-
-    if (fp == NULL) return NULL;
-    if (getline (&line, &len, fp) > 0)
-    {
-        res = line;
-        while (*res)
-        {
-            if (g_ascii_isspace (*res)) *res = 0;
-            res++;
-        }
-        res = g_strdup (line);
-    }
-    pclose (fp);
-    g_free (line);
-    return res;
-}
 
 static void set_init (GtkTreeModel *model, GtkWidget *cb, int pos, char *init)
 {
@@ -886,6 +890,7 @@ void read_wayfire_values (void)
     GError *err;
     char *user_config_file;
     GKeyFile *kfu, *kfs;
+    int val;
 
     /* open user and system config files */
     user_config_file = g_build_filename (g_get_user_config_dir (), "wayfire.ini", NULL);
@@ -934,6 +939,12 @@ void read_wayfire_values (void)
 
     g_key_file_free (kfu);
     g_key_file_free (kfs);
+    g_free (user_config_file);
+
+    user_config_file = get_string ("gsettings get org.gnome.settings-daemon.peripherals.mouse double-click");
+    if (sscanf (user_config_file, "%d", &val) == 1) dclick = val;
+    else dclick = 400;
+    old_dclick = dclick;
     g_free (user_config_file);
 }
 
@@ -987,12 +998,9 @@ int main(int argc, char** argv)
 
     g_object_unref( builder );
 
-
     /* read the config file */
-    if (wayfire)
-    {
-    }
-    else
+    /* read the config file */
+    if (!wayfire)
     {
         load_settings();
         read_mouse_speed ();
@@ -1100,6 +1108,7 @@ int main(int argc, char** argv)
         left_handed = old_left_handed;
         facc = old_facc;
 
+        set_dclick_time (old_dclick);
         if (wayfire)
         {
             char *user_config_file, *str;
@@ -1131,7 +1140,6 @@ int main(int argc, char** argv)
             //XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), True, True,
             //                         accel, 10, threshold);
             set_left_handed_mouse();
-            set_dclick_time (old_dclick);
 
             char buf[256];
             update_facc_str ();
