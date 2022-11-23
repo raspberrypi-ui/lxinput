@@ -70,7 +70,7 @@ static guint dctimer = 0, matimer = 0;
 
 static GList *devs = NULL;
 
-static GSettings *mouse_settings;
+static GSettings *mouse_settings, *keyboard_settings;
 
 /* Window manager in use */
 
@@ -356,8 +356,7 @@ static void set_mouse_accel (void)
             system (buf);
         }
 
-        sprintf (buf, "gsettings set org.gnome.desktop.peripherals.mouse speed %s", fstr);
-        system (buf);
+        g_settings_set_double (mouse_settings, "speed", facc);
     }
 }
 
@@ -408,14 +407,10 @@ static void set_kbd_rates (void)
     }
     else
     {
-        char buf[256];
-
         /* apply keyboard values */
         XkbSetAutoRepeatRate(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), XkbUseCoreKbd, delay, interval);
-        sprintf (buf, "gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval %d", interval);
-        system (buf);
-        sprintf (buf, "gsettings set org.gnome.desktop.peripherals.keyboard delay %d", delay);
-        system (buf);
+        g_settings_set_uint (keyboard_settings, "repeat-interval", interval);
+        g_settings_set_uint (keyboard_settings, "delay", delay);
     }
 }
 
@@ -1004,6 +999,8 @@ int main(int argc, char** argv)
         load_settings();
         read_mouse_speed ();
         update_facc_str ();
+        mouse_settings = g_settings_new ("org.gnome.desktop.peripherals.mouse");
+        keyboard_settings = g_settings_new ("org.gnome.desktop.peripherals.keyboard");
     }
 
     /* init the UI */
@@ -1134,6 +1131,8 @@ int main(int argc, char** argv)
         else
         {
             XkbSetAutoRepeatRate(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), XkbUseCoreKbd, delay, interval);
+            g_settings_set_uint (keyboard_settings, "repeat-interval", interval);
+            g_settings_set_uint (keyboard_settings, "delay", delay);
             /* FIXME: beep? */
 
             //XChangePointerControl(GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), True, True,
@@ -1148,6 +1147,7 @@ int main(int argc, char** argv)
                 sprintf (buf, "xinput --set-prop %s \"libinput Accel Speed\" %s", l->data, fstr);
                 system (buf);
             }
+            g_settings_set_double (mouse_settings, "speed", facc);
         }
     }
 
