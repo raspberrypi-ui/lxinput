@@ -905,6 +905,7 @@ void read_wayfire_values (void)
         delay = g_key_file_get_integer (kfs, "input", "kb_repeat_delay", &err);
         if (err) delay = 400;
     }
+    old_delay = delay;
 
     err = NULL;
     interval = g_key_file_get_integer (kfu, "input", "kb_repeat_rate", &err);
@@ -913,8 +914,9 @@ void read_wayfire_values (void)
         err = NULL;
         interval = g_key_file_get_integer (kfs, "input", "kb_repeat_rate", &err);
         if (err) interval = 40;
-        interval = 1000 / interval;
     }
+    interval = 1000 / interval;
+    old_interval = interval;
 
     err = NULL;
     facc = g_key_file_get_double (kfu, "input", "mouse_cursor_speed", &err);
@@ -924,6 +926,7 @@ void read_wayfire_values (void)
         facc = g_key_file_get_double (kfs, "input", "mouse_cursor_speed", &err);
         if (err) facc = 0;
     }
+    old_facc = facc;
 
     err = NULL;
     left_handed = g_key_file_get_boolean (kfu, "input", "left_handed_mode", &err);
@@ -933,6 +936,7 @@ void read_wayfire_values (void)
         left_handed = g_key_file_get_boolean (kfs, "input", "left_handed_mode", &err);
         if (err) left_handed = FALSE;
     }
+    old_left_handed = left_handed;
 
     g_key_file_free (kfu);
     g_key_file_free (kfs);
