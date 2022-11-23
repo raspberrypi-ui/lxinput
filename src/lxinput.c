@@ -701,9 +701,9 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     dlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
     gtk_window_set_transient_for (GTK_WINDOW (dlg), GTK_WINDOW (dlg));
 
-    keymodel_cb = (GObject *) gtk_builder_get_object (builder, "keycbmodel");
-    keylayout_cb = (GObject *) gtk_builder_get_object (builder, "keycblayout");
-    keyvar_cb = (GObject *) gtk_builder_get_object (builder, "keycbvar");
+    keymodel_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbmodel");
+    keylayout_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycblayout");
+    keyvar_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbvar");
     gtk_combo_box_set_model (GTK_COMBO_BOX (keymodel_cb), GTK_TREE_MODEL (model_list));
     gtk_combo_box_set_model (GTK_COMBO_BOX (keylayout_cb), GTK_TREE_MODEL (layout_list));
     gtk_combo_box_set_model (GTK_COMBO_BOX (keyvar_cb), GTK_TREE_MODEL (variant_list));
@@ -1072,6 +1072,7 @@ int main(int argc, char** argv)
         mouse_settings = g_settings_new ("org.gnome.desktop.peripherals.mouse");
         keyboard_settings = g_settings_new ("org.gnome.desktop.peripherals.keyboard");
     }
+    else gtk_widget_hide (GTK_WIDGET (kb_beep));
 
     /* init the UI */
     gtk_range_set_value(mouse_accel, (facc + 1) * 5.0);
