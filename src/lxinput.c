@@ -70,6 +70,8 @@ static guint dctimer = 0, matimer = 0;
 
 static GList *devs = NULL;
 
+static GSettings *mouse_settings;
+
 /* Window manager in use */
 
 static gboolean wayfire = FALSE;
@@ -271,7 +273,7 @@ static void set_dclick_time (int time)
     GKeyFile *kf;
     gsize len;
 
-    if (wayfire) vsystem ("gsettings set org.gnome.settings-daemon.peripherals.mouse double-click %d", time);
+    if (wayfire) g_settings_set_int (mouse_settings, "double-click", time);
     else
     {
         // construct the file path
@@ -941,11 +943,8 @@ void read_wayfire_values (void)
     g_key_file_free (kfs);
     g_free (user_config_file);
 
-    user_config_file = get_string ("gsettings get org.gnome.settings-daemon.peripherals.mouse double-click");
-    if (sscanf (user_config_file, "%d", &val) == 1) dclick = val;
-    else dclick = 400;
-    old_dclick = dclick;
-    g_free (user_config_file);
+    mouse_settings = g_settings_new ("org.gnome.settings-daemon.peripherals.mouse");
+    dclick = old_dclick = g_settings_get_int (mouse_settings, "double-click");
 }
 
 int main(int argc, char** argv)
