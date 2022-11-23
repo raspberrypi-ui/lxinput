@@ -681,13 +681,14 @@ static void read_keyboards (void)
 
 static void on_set_keyboard (GtkButton* btn, gpointer ptr)
 {
-    FILE *fp;
     GtkBuilder *builder;
-    GtkWidget *kdlg;
+    GtkWidget *dlg;
     GtkCellRenderer *col;
     GtkTreeIter iter;
-    char *buffer, *init_model = NULL, *init_layout = NULL, *init_variant = NULL, *new_mod, *new_lay, *new_var;
-    int n;
+    char *init_model = NULL, *init_layout = NULL, *init_variant = NULL, *new_mod, *new_lay, *new_var;
+    gboolean update = FALSE;
+    char *user_config_file;
+    GKeyFile *kf;
 
     // set up list stores for keyboard layouts
     model_list = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
@@ -697,12 +698,12 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
 
     // build the dialog and attach the combo boxes
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/lxinput.ui");
-    kdlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
-    gtk_window_set_transient_for (GTK_WINDOW (kdlg), GTK_WINDOW (dlg));
+    dlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
+    gtk_window_set_transient_for (GTK_WINDOW (dlg), GTK_WINDOW (dlg));
 
-    keymodel_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbmodel");
-    keylayout_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycblayout");
-    keyvar_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbvar");
+    keymodel_cb = (GObject *) gtk_builder_get_object (builder, "keycbmodel");
+    keylayout_cb = (GObject *) gtk_builder_get_object (builder, "keycblayout");
+    keyvar_cb = (GObject *) gtk_builder_get_object (builder, "keycbvar");
     gtk_combo_box_set_model (GTK_COMBO_BOX (keymodel_cb), GTK_TREE_MODEL (model_list));
     gtk_combo_box_set_model (GTK_COMBO_BOX (keylayout_cb), GTK_TREE_MODEL (layout_list));
     gtk_combo_box_set_model (GTK_COMBO_BOX (keyvar_cb), GTK_TREE_MODEL (variant_list));
@@ -716,13 +717,41 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (keyvar_cb), col, "text", 0);
 
     // get the current keyboard settings
-    init_model = get_string ("grep XKBMODEL /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
-    if (init_model == NULL) init_model = g_strdup ("pc105");
+    if (wayfire)
+    {
+        /* read user config first */
+        user_config_file = g_build_filename (g_get_user_config_dir (), "wayfire.ini", NULL);
+        kf = g_key_file_new ();
+        g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
+        init_model = g_key_file_get_string (kf, "input", "xkb_model", NULL);
+        init_layout = g_key_file_get_string (kf, "input", "xkb_layout", NULL);
+        init_variant = g_key_file_get_string (kf, "input", "xkb_variant", NULL);
+        g_key_file_free (kf);
 
-    init_layout = get_string ("grep XKBLAYOUT /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
-    if (init_layout == NULL) init_layout = g_strdup ("gb");
+        /* read system config */
+        kf = g_key_file_new ();
+        g_key_file_load_from_file (kf, "/etc/wayfire/defaults.ini", G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
+        if (init_model == NULL) init_model = g_key_file_get_string (kf, "input", "xkb_model", NULL);
+        if (init_layout == NULL) init_layout = g_key_file_get_string (kf, "input", "xkb_layout", NULL);
+        if (init_variant == NULL) init_variant = g_key_file_get_string (kf, "input", "xkb_variant", NULL);
+        g_key_file_free (kf);
 
-    init_variant = get_string ("grep XKBVARIANT /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
+        /* defaults */
+        if (init_model == NULL) init_model = g_strdup ("pc105");
+        if (init_layout == NULL) init_layout = g_strdup ("us");
+        if (init_variant == NULL) init_variant = g_strdup ("");
+    }
+    else
+    {
+        init_model = get_string ("grep XKBMODEL /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
+        if (init_model == NULL) init_model = g_strdup ("pc105");
+
+        init_layout = get_string ("grep XKBLAYOUT /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
+        if (init_layout == NULL) init_layout = g_strdup ("gb");
+
+        init_variant = get_string ("grep XKBVARIANT /etc/default/keyboard | cut -d = -f 2 | tr -d '\"' | rev | cut -d , -f 1 | rev");
+        if (init_variant == NULL) init_variant = g_strdup ("");
+    }
 
     set_init (GTK_TREE_MODEL (model_list), keymodel_cb, 1, init_model);
     set_init (GTK_TREE_MODEL (layout_list), keylayout_cb, 1, init_layout);
@@ -732,48 +761,87 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     g_object_unref (builder);
 
     // run the dialog
-    if (gtk_dialog_run (GTK_DIALOG (kdlg)) == GTK_RESPONSE_OK)
+    if (gtk_dialog_run (GTK_DIALOG (dlg)) == GTK_RESPONSE_OK)
     {
-        n = 0;
         gtk_combo_box_get_active_iter (GTK_COMBO_BOX (keymodel_cb), &iter);
         gtk_tree_model_get (GTK_TREE_MODEL (model_list), &iter, 1, &new_mod, -1);
-        if (g_strcmp0 (new_mod, init_model))
-        {
-            vsystem ("grep -q XKBMODEL /etc/default/keyboard && sudo sed -i 's/XKBMODEL=.*/XKBMODEL=%s/g' /etc/default/keyboard || sudo echo 'XKBMODEL=%s' >> /etc/default/keyboard", new_mod, new_mod);
-            n = 1;
-        }
-
         gtk_combo_box_get_active_iter (GTK_COMBO_BOX (keylayout_cb), &iter);
         gtk_tree_model_get (GTK_TREE_MODEL (layout_list), &iter, 1, &new_lay, -1);
-        if (g_strcmp0 (new_lay, init_layout))
-        {
-            vsystem ("grep -q XKBLAYOUT /etc/default/keyboard && sudo sed -i 's/XKBLAYOUT=.*/XKBLAYOUT=%s/g' /etc/default/keyboard || sudo echo 'XKBLAYOUT=%s' >> /etc/default/keyboard", new_lay, new_lay);
-            n = 1;
-        }
-
         gtk_combo_box_get_active_iter (GTK_COMBO_BOX (keyvar_cb), &iter);
         gtk_tree_model_get (GTK_TREE_MODEL (variant_list), &iter, 1, &new_var, -1);
-        if (g_strcmp0 (new_var, init_variant))
+
+        gtk_widget_destroy (dlg);
+
+        if (wayfire)
         {
-            vsystem ("grep -q XKBVARIANT /etc/default/keyboard && sudo sed -i 's/XKBVARIANT=.*/XKBVARIANT=%s/g' /etc/default/keyboard || sudo echo 'XKBVARIANT=%s' >> /etc/default/keyboard", new_var, new_var);
-            n = 1;
+            char *str;
+            gsize len;
+
+            kf = g_key_file_new ();
+            g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
+
+            if (g_strcmp0 (new_mod, init_model))
+            {
+                g_key_file_set_string (kf, "input", "xkb_model", new_mod);
+                update = TRUE;
+            }
+            if (g_strcmp0 (new_lay, init_layout))
+            {
+                g_key_file_set_string (kf, "input", "xkb_layout", new_lay);
+                update = TRUE;
+            }
+            if (g_strcmp0 (new_var, init_variant))
+            {
+                g_key_file_set_string (kf, "input", "xkb_variant", new_var);
+                update = TRUE;
+            }
+
+            if (update)
+            {
+                str = g_key_file_to_data (kf, &len, NULL);
+                g_file_set_contents (user_config_file, str, len, NULL);
+                g_free (str);
+            }
+
+            g_key_file_free (kf);
+            g_free (user_config_file);
+        }
+        else
+        {
+            if (g_strcmp0 (new_mod, init_model))
+            {
+                vsystem ("grep -q XKBMODEL /etc/default/keyboard && sed -i 's/XKBMODEL=.*/XKBMODEL=%s/g' /etc/default/keyboard || echo 'XKBMODEL=%s' >> /etc/default/keyboard", new_mod, new_mod);
+                update = TRUE;
+            }
+            if (g_strcmp0 (new_lay, init_layout))
+            {
+                vsystem ("grep -q XKBLAYOUT /etc/default/keyboard && sed -i 's/XKBLAYOUT=.*/XKBLAYOUT=%s/g' /etc/default/keyboard || echo 'XKBLAYOUT=%s' >> /etc/default/keyboard", new_lay, new_lay);
+                update = TRUE;
+            }
+            if (g_strcmp0 (new_var, init_variant))
+            {
+                vsystem ("grep -q XKBVARIANT /etc/default/keyboard && sed -i 's/XKBVARIANT=.*/XKBVARIANT=%s/g' /etc/default/keyboard || echo 'XKBVARIANT=%s' >> /etc/default/keyboard", new_var, new_var);
+                update = TRUE;
+            }
+
+            if (update)
+            {
+                // this updates the current session when invoked after the udev update
+                sprintf (gbuffer, "setxkbmap %s%s%s%s%s", new_lay, new_mod[0] ? " -model " : "", new_mod, new_var[0] ? " -variant " : "", new_var);
+
+                // warn about a short delay...
+                message (_("Setting keyboard - please wait..."));
+
+                // launch a thread with the system call to update the keyboard
+                pthread = g_thread_new (NULL, keyboard_thread, NULL);
+            }
         }
 
-        // this updates the current session when invoked after the udev update
-        sprintf (gbuffer, "setxkbmap %s%s%s%s%s", new_lay, new_mod[0] ? " -model " : "", new_mod, new_var[0] ? " -variant " : "", new_var);
         g_free (new_mod);
         g_free (new_lay);
         g_free (new_var);
-
-        if (n)
-        {
-            // warn about a short delay...
-            message (_("Setting keyboard - please wait..."));
-
-            // launch a thread with the system call to update the keyboard
-            pthread = g_thread_new (NULL, keyboard_thread, NULL);
-        }
     }
+    else gtk_widget_destroy (dlg);
 
     g_free (init_model);
     g_free (init_layout);
@@ -781,8 +849,6 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     g_object_unref (model_list);
     g_object_unref (layout_list);
     g_object_unref (variant_list);
-
-    gtk_widget_destroy (kdlg);
 }
 
 static void set_range_stops(GtkRange* range, int interval )
