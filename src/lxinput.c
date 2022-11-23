@@ -85,42 +85,6 @@ GThread *pthread;
 
 GtkListStore *model_list, *layout_list, *variant_list;
 
-static int vsystem (const char *fmt, ...)
-{
-    char *cmdline;
-    int res;
-
-    va_list arg;
-    va_start (arg, fmt);
-    g_vasprintf (&cmdline, fmt, arg);
-    va_end (arg);
-    res = system (cmdline);
-    g_free (cmdline);
-    return res;
-}
-
-static char *get_string (char *cmd)
-{
-    char *line = NULL, *res = NULL;
-    size_t len = 0;
-    FILE *fp = popen (cmd, "r");
-
-    if (fp == NULL) return NULL;
-    if (getline (&line, &len, fp) > 0)
-    {
-        res = line;
-        while (*res)
-        {
-            if (g_ascii_isspace (*res)) *res = 0;
-            res++;
-        }
-        res = g_strdup (line);
-    }
-    pclose (fp);
-    g_free (line);
-    return res;
-}
-
 char *update_facc_str (void)
 {
     char *oldloc = setlocale (LC_NUMERIC, NULL);
@@ -508,6 +472,42 @@ static gboolean on_change_val(GtkRange *range, GtkScrollType scroll,
 */
 
 /* Keyboard setting */
+
+static int vsystem (const char *fmt, ...)
+{
+    char *cmdline;
+    int res;
+
+    va_list arg;
+    va_start (arg, fmt);
+    g_vasprintf (&cmdline, fmt, arg);
+    va_end (arg);
+    res = system (cmdline);
+    g_free (cmdline);
+    return res;
+}
+
+static char *get_string (char *cmd)
+{
+    char *line = NULL, *res = NULL;
+    size_t len = 0;
+    FILE *fp = popen (cmd, "r");
+
+    if (fp == NULL) return NULL;
+    if (getline (&line, &len, fp) > 0)
+    {
+        res = line;
+        while (*res)
+        {
+            if (g_ascii_isspace (*res)) *res = 0;
+            res++;
+        }
+        res = g_strdup (line);
+    }
+    pclose (fp);
+    g_free (line);
+    return res;
+}
 
 static void set_init (GtkTreeModel *model, GtkWidget *cb, int pos, char *init)
 {
