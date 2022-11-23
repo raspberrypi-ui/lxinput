@@ -810,17 +810,17 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
         {
             if (g_strcmp0 (new_mod, init_model))
             {
-                vsystem ("grep -q XKBMODEL /etc/default/keyboard && sed -i 's/XKBMODEL=.*/XKBMODEL=%s/g' /etc/default/keyboard || echo 'XKBMODEL=%s' >> /etc/default/keyboard", new_mod, new_mod);
+                vsystem ("grep -q XKBMODEL /etc/default/keyboard && sudo sed -i 's/XKBMODEL=.*/XKBMODEL=%s/g' /etc/default/keyboard || sudo echo 'XKBMODEL=%s' >> /etc/default/keyboard", new_mod, new_mod);
                 update = TRUE;
             }
             if (g_strcmp0 (new_lay, init_layout))
             {
-                vsystem ("grep -q XKBLAYOUT /etc/default/keyboard && sed -i 's/XKBLAYOUT=.*/XKBLAYOUT=%s/g' /etc/default/keyboard || echo 'XKBLAYOUT=%s' >> /etc/default/keyboard", new_lay, new_lay);
+                vsystem ("grep -q XKBLAYOUT /etc/default/keyboard && sudo sed -i 's/XKBLAYOUT=.*/XKBLAYOUT=%s/g' /etc/default/keyboard || sudo echo 'XKBLAYOUT=%s' >> /etc/default/keyboard", new_lay, new_lay);
                 update = TRUE;
             }
             if (g_strcmp0 (new_var, init_variant))
             {
-                vsystem ("grep -q XKBVARIANT /etc/default/keyboard && sed -i 's/XKBVARIANT=.*/XKBVARIANT=%s/g' /etc/default/keyboard || echo 'XKBVARIANT=%s' >> /etc/default/keyboard", new_var, new_var);
+                vsystem ("grep -q XKBVARIANT /etc/default/keyboard && sudo sed -i 's/XKBVARIANT=.*/XKBVARIANT=%s/g' /etc/default/keyboard || sudo echo 'XKBVARIANT=%s' >> /etc/default/keyboard", new_var, new_var);
                 update = TRUE;
             }
 
