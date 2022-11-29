@@ -556,6 +556,7 @@ static void message (char *msg)
     gtk_widget_hide (wid);
 
     gtk_widget_show (msg_dlg);
+    gtk_window_set_decorated (GTK_WINDOW (msg_dlg), FALSE);
 
     g_object_unref (builder);
 }
@@ -685,7 +686,7 @@ static void read_keyboards (void)
 static void on_set_keyboard (GtkButton* btn, gpointer ptr)
 {
     GtkBuilder *builder;
-    GtkWidget *dlg;
+    GtkWidget *kdlg;
     GtkCellRenderer *col;
     GtkTreeIter iter;
     char *init_model = NULL, *init_layout = NULL, *init_variant = NULL, *new_mod, *new_lay, *new_var;
@@ -701,8 +702,8 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
 
     // build the dialog and attach the combo boxes
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/lxinput.ui");
-    dlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
-    gtk_window_set_transient_for (GTK_WINDOW (dlg), GTK_WINDOW (dlg));
+    kdlg = (GtkWidget *) gtk_builder_get_object (builder, "keyboarddlg");
+    gtk_window_set_transient_for (GTK_WINDOW (kdlg), GTK_WINDOW (dlg));
 
     keymodel_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycbmodel");
     keylayout_cb = (GtkWidget *) gtk_builder_get_object (builder, "keycblayout");
@@ -764,7 +765,7 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
     g_object_unref (builder);
 
     // run the dialog
-    if (gtk_dialog_run (GTK_DIALOG (dlg)) == GTK_RESPONSE_OK)
+    if (gtk_dialog_run (GTK_DIALOG (kdlg)) == GTK_RESPONSE_OK)
     {
         gtk_combo_box_get_active_iter (GTK_COMBO_BOX (keymodel_cb), &iter);
         gtk_tree_model_get (GTK_TREE_MODEL (model_list), &iter, 1, &new_mod, -1);
@@ -773,7 +774,7 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
         gtk_combo_box_get_active_iter (GTK_COMBO_BOX (keyvar_cb), &iter);
         gtk_tree_model_get (GTK_TREE_MODEL (variant_list), &iter, 1, &new_var, -1);
 
-        gtk_widget_destroy (dlg);
+        gtk_widget_destroy (kdlg);
 
         if (wayfire)
         {
@@ -842,7 +843,7 @@ static void on_set_keyboard (GtkButton* btn, gpointer ptr)
         g_free (new_lay);
         g_free (new_var);
     }
-    else gtk_widget_destroy (dlg);
+    else gtk_widget_destroy (kdlg);
 
     g_free (init_model);
     g_free (init_layout);
