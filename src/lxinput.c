@@ -1010,7 +1010,7 @@ void read_wayfire_values (void)
     g_key_file_free (kfs);
     g_free (user_config_file);
 
-    mouse_settings = g_settings_new ("org.gnome.settings-daemon.peripherals.mouse");
+    mouse_settings = g_settings_new ("org.gnome.desktop.peripherals.mouse");
     dclick = old_dclick = g_settings_get_int (mouse_settings, "double-click");
 }
 
