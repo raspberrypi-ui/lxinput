@@ -1021,7 +1021,7 @@ int main(int argc, char** argv)
     GKeyFile* kf = g_key_file_new();
 
     // check window manager
-    if (!system ("ps ax | grep wayfire | grep -qv grep")) wayfire = TRUE;
+    if (getenv ("WAYFIRE_CONFIG_FILE")) wayfire = TRUE;
 
     if (wayfire) read_wayfire_values ();
     else
