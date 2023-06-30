@@ -41,8 +41,6 @@
 
 #define DEFAULT_SES "LXDE-pi"
 
-static char* file = NULL;
-
 static GtkWidget *dlg;
 static GtkRange *mouse_accel;
 static GtkRange *mouse_threshold;
@@ -642,6 +640,7 @@ int main(int argc, char** argv)
     GtkBuilder* builder;
     char* str = NULL, *rel_path, *user_config_file;
     GKeyFile* kf = g_key_file_new();
+    gsize len;
 
     // check window manager
     if (getenv ("WAYFIRE_CONFIG_FILE")) wayfire = TRUE;
@@ -688,7 +687,6 @@ int main(int argc, char** argv)
     g_object_unref( builder );
 
     /* read the config file */
-    /* read the config file */
     if (!wayfire)
     {
         load_settings();
@@ -727,8 +725,6 @@ int main(int argc, char** argv)
     {
         if (!wayfire)
         {
-            gsize len;
-
             if(!g_key_file_load_from_file(kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
             {
                 /* the user config file doesn't exist, create its parent dir */
@@ -783,6 +779,7 @@ int main(int argc, char** argv)
                 g_file_set_contents(user_config_file, str, -1, NULL);
                 g_free(str);
             }
+            g_free(user_config_file);
         }
     }
     else
@@ -803,13 +800,8 @@ int main(int argc, char** argv)
         set_dclick_time (old_dclick);
         if (wayfire)
         {
-            char *user_config_file, *str;
-            GKeyFile *kf;
-            gsize len;
-
             user_config_file = g_build_filename (g_get_user_config_dir (), "wayfire.ini", NULL);
 
-            kf = g_key_file_new ();
             g_key_file_load_from_file (kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL);
 
             g_key_file_set_integer (kf, "input", "kb_repeat_delay", delay);
@@ -821,7 +813,6 @@ int main(int argc, char** argv)
             g_file_set_contents (user_config_file, str, len, NULL);
             g_free (str);
 
-            g_key_file_free (kf);
             g_free (user_config_file);
         }
         else
@@ -844,14 +835,13 @@ int main(int argc, char** argv)
                 system (buf);
             }
             g_settings_set_double (mouse_settings, "speed", facc);
+            g_free(user_config_file);
         }
     }
 
     gtk_widget_destroy( dlg );
 
-       g_free( file );
     g_key_file_free( kf );
-    g_free(user_config_file);
 
     return 0;
 }
