@@ -643,7 +643,7 @@ int main(int argc, char** argv)
     gsize len;
 
     // check window manager
-    if (getenv ("WAYFIRE_CONFIG_FILE")) wayfire = TRUE;
+    if (getenv ("WAYLAND_DISPLAY")) wayfire = TRUE;
 
     if (wayfire) read_wayfire_values ();
     else
