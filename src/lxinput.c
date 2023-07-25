@@ -471,7 +471,7 @@ static gboolean on_change_val(GtkRange *range, GtkScrollType scroll,
 
 static void on_set_keyboard_ext (GtkButton* btn, gpointer ptr)
 {
-    g_spawn_command_line_async ("env SUDO_ASKPASS=/usr/bin/pwdrcg.sh sudo -AE rc_gui -k", NULL);
+    g_spawn_command_line_async ("rc_gui -k", NULL);
 }
 
 static void set_range_stops(GtkRange* range, int interval )
