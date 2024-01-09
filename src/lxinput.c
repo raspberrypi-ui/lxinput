@@ -223,7 +223,7 @@ void gdk_event_send_clientmessage_toall (GdkEvent *event)
 
 #endif
 
-static void set_xml_value (const char *lvl1, const char *lvl2, const char *name, const char *val)
+static void set_xml_value (const char *lvl1, const char *lvl2, const char *l2attr, const char *l2atval, const char *name, const char *val)
 {
     char *cptr, *user_config_file = g_build_filename (g_get_user_config_dir (), "labwc/rc.xml", NULL);
 
@@ -263,7 +263,11 @@ static void set_xml_value (const char *lvl1, const char *lvl2, const char *name,
     {
         cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2);
         xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
-        if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval)) xmlNewChild (cur_node, NULL, XC (lvl2), NULL);
+        if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval))
+        {
+            node = xmlNewChild (cur_node, NULL, XC (lvl2), NULL);
+            if (l2attr) xmlSetProp (node, l2attr, l2atval);
+        }
         xmlXPathFreeObject (xpathObj);
         g_free (cptr);
         cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2, name);
@@ -322,7 +326,7 @@ static void set_dclick_time (int time)
     else if (wm == WM_LABWC)
     {
         str = g_strdup_printf ("%d", time);
-        set_xml_value ("mouse", NULL, "doubleClickTime", str);
+        set_xml_value ("mouse", NULL, NULL, NULL, "doubleClickTime", str);
         g_free (str);
     }
     else
@@ -398,7 +402,7 @@ static void set_mouse_accel (void)
     else if (wm == WM_LABWC)
     {
         update_facc_str ();
-        set_xml_value ("libinput", "device category=\"default\"", "pointerSpeed", fstr);
+        set_xml_value ("libinput", "device", "category", "default", "pointerSpeed", fstr);
     }
     else
     {
@@ -466,11 +470,11 @@ static void set_kbd_rates (void)
         char *str;
 
         str = g_strdup_printf ("%d", 1000 / interval);
-        set_xml_value ("keyboard", NULL, "repeatRate", str);
+        set_xml_value ("keyboard", NULL, NULL, NULL, "repeatRate", str);
         g_free (str);
 
         str = g_strdup_printf ("%d", delay);
-        set_xml_value ("keyboard", NULL, "repeatDelay", str);
+        set_xml_value ("keyboard", NULL, NULL, NULL, "repeatDelay", str);
         g_free (str);
     }
     else
@@ -522,6 +526,7 @@ static void set_left_handed_mouse()
     }
     else if (wm == WM_LABWC)
     {
+        set_xml_value ("libinput", "device", "category", "default", "leftHanded", left_handed ? "yes" : "no");
     }
     else
     {
