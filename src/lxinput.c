@@ -38,8 +38,11 @@
 #include <gdk/gdkx.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
+#include <libxml/xpath.h>
 
 #define DEFAULT_SES "LXDE-pi"
+
+#define XC(str) ((xmlChar *) str)
 
 static GtkWidget *dlg;
 static GtkRange *mouse_accel;
@@ -72,7 +75,11 @@ static GSettings *mouse_settings, *keyboard_settings;
 
 /* Window manager in use */
 
-static gboolean wayfire = FALSE;
+typedef enum {
+    WM_OPENBOX,
+    WM_WAYFIRE,
+    WM_LABWC } wm_type;
+static wm_type wm;
 
 /* Globals accessed from multiple threads */
 
@@ -165,7 +172,7 @@ static gboolean gdk_event_send_client_message_to_all_recurse (GdkDisplay *displa
     else
     {
         /* OK, we're all set, now let's find some windows to send this to */
-        if (!XQueryTree (GDK_DISPLAY_XDISPLAY (display), xid, &ret_root, &ret_parent, &ret_children, &ret_nchildren))	
+        if (!XQueryTree (GDK_DISPLAY_XDISPLAY (display), xid, &ret_root, &ret_parent, &ret_children, &ret_nchildren))
             goto out;
 
         for (i = 0; i < ret_nchildren; i++)
@@ -216,6 +223,82 @@ void gdk_event_send_clientmessage_toall (GdkEvent *event)
 
 #endif
 
+static void set_xml_value (const char *lvl1, const char *lvl2, const char *name, const char *val)
+{
+    char *cptr, *user_config_file = g_build_filename (g_get_user_config_dir (), "labwc/rc.xml", NULL);
+
+    xmlDocPtr xDoc;
+    xmlNodePtr root, cur_node, node;
+    xmlXPathObjectPtr xpathObj;
+    xmlXPathContextPtr xpathCtx;
+
+    // read in data from XML file
+    xmlInitParser ();
+    LIBXML_TEST_VERSION
+    if (g_file_test (user_config_file, G_FILE_TEST_IS_REGULAR))
+    {
+        xDoc = xmlParseFile (user_config_file);
+        if (!xDoc) xDoc = xmlNewDoc ((xmlChar *) "1.0");
+    }
+    else xDoc = xmlNewDoc ((xmlChar *) "1.0");
+    xpathCtx = xmlXPathNewContext (xDoc);
+
+    // check that the nodes exist in the document - create them if not
+    xpathObj = xmlXPathEvalExpression (XC ("/*[local-name()='openbox_config']"), xpathCtx);
+    if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval))
+    {
+        root = xmlNewNode (NULL, XC ("openbox_config"));
+        xmlDocSetRootElement (xDoc, root);
+    }
+    else root = xpathObj->nodesetval->nodeTab[0];
+    xmlXPathFreeObject (xpathObj);
+
+    cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']", lvl1);
+    xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
+    if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval)) cur_node = xmlNewChild (root, NULL, XC (lvl1), NULL);
+    xmlXPathFreeObject (xpathObj);
+    g_free (cptr);
+
+    if (lvl2)
+    {
+        cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2);
+        xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
+        if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval)) xmlNewChild (cur_node, NULL, XC (lvl2), NULL);
+        xmlXPathFreeObject (xpathObj);
+        g_free (cptr);
+        cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2, name);
+    }
+    else cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']", lvl1, name);
+
+    xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
+    if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval))
+    {
+        xmlXPathFreeObject (xpathObj);
+        g_free (cptr);
+        if (lvl2) cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2);
+        else cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']", lvl1);
+        xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
+        cur_node = xpathObj->nodesetval->nodeTab[0];
+        xmlNewChild (cur_node, NULL, XC (name), XC (val));
+    }
+    else
+    {
+        cur_node = xpathObj->nodesetval->nodeTab[0];
+        xmlNodeSetContent (cur_node, XC (val));
+    }
+    g_free (cptr);
+
+    // cleanup XML
+    xmlXPathFreeObject (xpathObj);
+    xmlXPathFreeContext (xpathCtx);
+    xmlSaveFile (user_config_file, xDoc);
+    xmlFreeDoc (xDoc);
+    xmlCleanupParser ();
+
+    g_free (user_config_file);
+}
+
+
 static void reload_all_programs (void)
 {
     GdkEventClient event;
@@ -235,7 +318,13 @@ static void set_dclick_time (int time)
     GKeyFile *kf;
     gsize len;
 
-    if (wayfire) g_settings_set_int (mouse_settings, "double-click", time);
+    if (wm == WM_WAYFIRE) g_settings_set_int (mouse_settings, "double-click", time);
+    else if (wm == WM_LABWC)
+    {
+        str = g_strdup_printf ("%d", time);
+        set_xml_value ("mouse", NULL, "doubleClickTime", str);
+        g_free (str);
+    }
     else
     {
         // construct the file path
@@ -286,7 +375,7 @@ static void on_mouse_dclick_changed (GtkRange* range, gpointer user_data)
 
 static void set_mouse_accel (void)
 {
-    if (wayfire)
+    if (wm == WM_WAYFIRE)
     {
         char *user_config_file, *str;
         GKeyFile *kf;
@@ -305,6 +394,11 @@ static void set_mouse_accel (void)
 
         g_key_file_free (kf);
         g_free (user_config_file);
+    }
+    else if (wm == WM_LABWC)
+    {
+        update_facc_str ();
+        set_xml_value ("libinput", "device category=\"default\"", "pointerSpeed", fstr);
     }
     else
     {
@@ -346,7 +440,7 @@ static void on_mouse_threshold_changed(GtkRange* range, gpointer user_data)
 
 static void set_kbd_rates (void)
 {
-    if (wayfire)
+    if (wm == WM_WAYFIRE)
     {
         char *user_config_file, *str;
         GKeyFile *kf;
@@ -366,6 +460,18 @@ static void set_kbd_rates (void)
 
         g_key_file_free (kf);
         g_free (user_config_file);
+    }
+    else if (wm == WM_LABWC)
+    {
+        char *str;
+
+        str = g_strdup_printf ("%d", 1000 / interval);
+        set_xml_value ("keyboard", NULL, "repeatRate", str);
+        g_free (str);
+
+        str = g_strdup_printf ("%d", delay);
+        set_xml_value ("keyboard", NULL, "repeatDelay", str);
+        g_free (str);
     }
     else
     {
@@ -394,7 +500,7 @@ static void on_kb_range_changed (GtkRange* range, int *val)
 #define DEFAULT_PTR_MAP_SIZE 128
 static void set_left_handed_mouse()
 {
-    if (wayfire)
+    if (wm == WM_WAYFIRE)
     {
         char *user_config_file, *str;
         GKeyFile *kf;
@@ -413,6 +519,9 @@ static void set_left_handed_mouse()
 
         g_key_file_free (kf);
         g_free (user_config_file);
+    }
+    else if (wm == WM_LABWC)
+    {
     }
     else
     {
@@ -485,8 +594,8 @@ static void set_range_stops(GtkRange* range, int interval )
 static void load_settings()
 {
     const char* session_name = g_getenv("DESKTOP_SESSION");
-	/* load settings from current session config files */
-	if (!session_name) session_name = DEFAULT_SES;
+    /* load settings from current session config files */
+    if (!session_name) session_name = DEFAULT_SES;
 
     char* rel_path = g_strconcat("lxsession/", session_name, "/desktop.conf", NULL);
     char* user_config_file = g_build_filename(g_get_user_config_dir(), rel_path, NULL);
@@ -635,6 +744,11 @@ void read_wayfire_values (void)
     dclick = old_dclick = g_settings_get_int (mouse_settings, "double-click");
 }
 
+void read_labwc_values (void)
+{
+
+}
+
 int main(int argc, char** argv)
 {
     GtkBuilder* builder;
@@ -643,9 +757,15 @@ int main(int argc, char** argv)
     gsize len;
 
     // check window manager
-    if (getenv ("WAYFIRE_CONFIG_FILE")) wayfire = TRUE;
+    if (getenv ("WAYLAND_DISPLAY"))
+    {
+        if (getenv ("WAYFIRE_CONFIG_FILE")) wm = WM_WAYFIRE;
+        else wm = WM_LABWC;
+    }
+    else wm = WM_OPENBOX;
 
-    if (wayfire) read_wayfire_values ();
+    if (wm == WM_WAYFIRE) read_wayfire_values ();
+    else if (wm == WM_LABWC) read_labwc_values ();
     else
     {
         get_valid_mice ();
@@ -687,7 +807,7 @@ int main(int argc, char** argv)
     g_object_unref( builder );
 
     /* read the config file */
-    if (!wayfire)
+    if (wm == WM_OPENBOX)
     {
         load_settings();
         read_mouse_speed ();
@@ -723,7 +843,7 @@ int main(int argc, char** argv)
 
     if( gtk_dialog_run( (GtkDialog*)dlg ) == GTK_RESPONSE_OK )
     {
-        if (!wayfire)
+        if (wm == WM_OPENBOX)
         {
             if(!g_key_file_load_from_file(kf, user_config_file, G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
             {
@@ -798,7 +918,7 @@ int main(int argc, char** argv)
         facc = old_facc;
 
         set_dclick_time (old_dclick);
-        if (wayfire)
+        if (wm == WM_WAYFIRE)
         {
             user_config_file = g_build_filename (g_get_user_config_dir (), "wayfire.ini", NULL);
 
@@ -814,6 +934,9 @@ int main(int argc, char** argv)
             g_free (str);
 
             g_free (user_config_file);
+        }
+        else if (wm == WM_LABWC)
+        {
         }
         else
         {

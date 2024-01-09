@@ -47,6 +47,7 @@ if test "x$enable_gtk3" = "xyes" ; then
 else
   gtk_modules="gtk+-2.0 >= 2.12.0"
 fi
+gtk_modules="$gtk_modules libxml-2.0"
 PKG_CHECK_MODULES(GTK, [$gtk_modules])
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
