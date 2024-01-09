@@ -225,12 +225,14 @@ void gdk_event_send_clientmessage_toall (GdkEvent *event)
 
 static void set_xml_value (const char *lvl1, const char *lvl2, const char *l2attr, const char *l2atval, const char *name, const char *val)
 {
-    char *cptr, *user_config_file = g_build_filename (g_get_user_config_dir (), "labwc/rc.xml", NULL);
+    char *cptr, *attr, *user_config_file = g_build_filename (g_get_user_config_dir (), "labwc/rc.xml", NULL);
 
     xmlDocPtr xDoc;
     xmlNodePtr root, cur_node, node;
     xmlXPathObjectPtr xpathObj;
     xmlXPathContextPtr xpathCtx;
+
+    if (l2attr) attr = g_strdup_printf ("[@%s=\"%s\"]", l2attr, l2atval);
 
     // read in data from XML file
     xmlInitParser ();
@@ -256,12 +258,13 @@ static void set_xml_value (const char *lvl1, const char *lvl2, const char *l2att
     cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']", lvl1);
     xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
     if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval)) cur_node = xmlNewChild (root, NULL, XC (lvl1), NULL);
+    else cur_node = xpathObj->nodesetval->nodeTab[0];
     xmlXPathFreeObject (xpathObj);
     g_free (cptr);
 
     if (lvl2)
     {
-        cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2);
+        cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']%s", lvl1, lvl2, l2attr ? attr : "");
         xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
         if (xmlXPathNodeSetIsEmpty (xpathObj->nodesetval))
         {
@@ -270,7 +273,7 @@ static void set_xml_value (const char *lvl1, const char *lvl2, const char *l2att
         }
         xmlXPathFreeObject (xpathObj);
         g_free (cptr);
-        cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2, name);
+        cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']%s/*[local-name()='%s']", lvl1, lvl2, l2attr ? attr : "", name);
     }
     else cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']", lvl1, name);
 
@@ -279,7 +282,7 @@ static void set_xml_value (const char *lvl1, const char *lvl2, const char *l2att
     {
         xmlXPathFreeObject (xpathObj);
         g_free (cptr);
-        if (lvl2) cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']", lvl1, lvl2);
+        if (lvl2) cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']/*[local-name()='%s']%s", lvl1, lvl2, l2attr ? attr : "");
         else cptr = g_strdup_printf ("/*[local-name()='openbox_config']/*[local-name()='%s']", lvl1);
         xpathObj = xmlXPathEvalExpression (XC (cptr), xpathCtx);
         cur_node = xpathObj->nodesetval->nodeTab[0];
@@ -299,6 +302,7 @@ static void set_xml_value (const char *lvl1, const char *lvl2, const char *l2att
     xmlFreeDoc (xDoc);
     xmlCleanupParser ();
 
+    if (l2attr) g_free (attr);
     g_free (user_config_file);
 }
 
