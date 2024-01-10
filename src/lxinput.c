@@ -760,7 +760,97 @@ void read_wayfire_values (void)
 
 void read_labwc_values (void)
 {
+    char *user_config_file = g_build_filename (g_get_user_config_dir (), "labwc/rc.xml", NULL);;
+    int val;
+    float fval;
+    xmlXPathObjectPtr xpathObj;
+    xmlNode *node;
 
+    // labwc default values if nothing set in rc.xml
+    interval = 40;
+    delay = 600;
+    dclick = 500;
+    facc = 0.0;
+    left_handed = FALSE;
+
+    if (!g_file_test (user_config_file, G_FILE_TEST_IS_REGULAR))
+    {
+        g_free (user_config_file);
+        return;
+    }
+
+    // read in data from XML file
+    xmlInitParser ();
+    LIBXML_TEST_VERSION
+    xmlDocPtr xDoc = xmlParseFile (user_config_file);
+    if (xDoc == NULL)
+    {
+        g_free (user_config_file);
+        return;
+    }
+
+    xmlXPathContextPtr xpathCtx = xmlXPathNewContext (xDoc);
+
+    xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='keyboard']/*[local-name()='repeatRate']", xpathCtx);
+    if (xpathObj)
+    {
+        if (xpathObj->nodesetval)
+        {
+            node = xpathObj->nodesetval->nodeTab[0];
+            if (node && sscanf ((const char *) xmlNodeGetContent (node), "%d", &val) == 1 && val > 0) interval = 1000 / val;
+        }
+        xmlXPathFreeObject (xpathObj);
+    }
+
+    xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='keyboard']/*[local-name()='repeatDelay']", xpathCtx);
+    if (xpathObj)
+    {
+        if (xpathObj->nodesetval)
+        {
+            node = xpathObj->nodesetval->nodeTab[0];
+            if (node && sscanf ((const char *) xmlNodeGetContent (node), "%d", &val) == 1 && val > 0) delay = val;
+        }
+        xmlXPathFreeObject (xpathObj);
+    }
+
+    xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='mouse']/*[local-name()='doubleClickTime']", xpathCtx);
+    if (xpathObj)
+    {
+        if (xpathObj->nodesetval)
+        {
+            node = xpathObj->nodesetval->nodeTab[0];
+            if (node && sscanf ((const char *) xmlNodeGetContent (node), "%d", &val) == 1 && val > 0) dclick = val;
+        }
+        xmlXPathFreeObject (xpathObj);
+    }
+
+    xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='libinput']/*[local-name()='device'][@category=\"default\"]/*[local-name()='pointerSpeed']", xpathCtx);
+    if (xpathObj)
+    {
+        if (xpathObj->nodesetval)
+        {
+            node = xpathObj->nodesetval->nodeTab[0];
+            if (node && sscanf ((const char *) xmlNodeGetContent (node), "%f", &fval) == 1) facc = fval;
+        }
+        xmlXPathFreeObject (xpathObj);
+    }
+
+    xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='libinput']/*[local-name()='device'][@category=\"default\"]/*[local-name()='leftHanded']", xpathCtx);
+    if (xpathObj)
+    {
+        if (xpathObj->nodesetval)
+        {
+            node = xpathObj->nodesetval->nodeTab[0];
+            if (node && xmlNodeGetContent (node) && !strcmp (xmlNodeGetContent (node), "yes")) left_handed = TRUE;
+        }
+        xmlXPathFreeObject (xpathObj);
+    }
+
+    xmlXPathFreeContext (xpathCtx);
+    xmlFreeDoc (xDoc);
+    xmlCleanupParser ();
+
+    g_free (user_config_file);
 }
 
 int main(int argc, char** argv)
