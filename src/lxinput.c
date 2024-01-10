@@ -332,6 +332,7 @@ static void set_dclick_time (int time)
         str = g_strdup_printf ("%d", time);
         set_xml_value ("mouse", NULL, NULL, NULL, "doubleClickTime", str);
         g_free (str);
+        system ("labwc -r");
     }
     else
     {
@@ -407,6 +408,7 @@ static void set_mouse_accel (void)
     {
         update_facc_str ();
         set_xml_value ("libinput", "device", "category", "default", "pointerSpeed", fstr);
+        system ("labwc -r");
     }
     else
     {
@@ -480,6 +482,8 @@ static void set_kbd_rates (void)
         str = g_strdup_printf ("%d", delay);
         set_xml_value ("keyboard", NULL, NULL, NULL, "repeatDelay", str);
         g_free (str);
+
+        system ("labwc -r");
     }
     else
     {
@@ -531,6 +535,7 @@ static void set_left_handed_mouse()
     else if (wm == WM_LABWC)
     {
         set_xml_value ("libinput", "device", "category", "default", "leftHanded", left_handed ? "yes" : "no");
+        system ("labwc -r");
     }
     else
     {
@@ -946,6 +951,21 @@ int main(int argc, char** argv)
         }
         else if (wm == WM_LABWC)
         {
+            char *str;
+
+            str = g_strdup_printf ("%d", 1000 / interval);
+            set_xml_value ("keyboard", NULL, NULL, NULL, "repeatRate", str);
+            g_free (str);
+
+            str = g_strdup_printf ("%d", delay);
+            set_xml_value ("keyboard", NULL, NULL, NULL, "repeatDelay", str);
+            g_free (str);
+
+            update_facc_str ();
+            set_xml_value ("libinput", "device", "category", "default", "pointerSpeed", fstr);
+            set_xml_value ("libinput", "device", "category", "default", "leftHanded", left_handed ? "yes" : "no");
+
+            system ("labwc -r");
         }
         else
         {
