@@ -39,6 +39,7 @@
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 
 #define DEFAULT_SES "LXDE-pi"
 
@@ -251,6 +252,8 @@ static void set_xml_value (const char *lvl1, const char *lvl2, const char *l2att
     {
         root = xmlNewNode (NULL, XC ("openbox_config"));
         xmlDocSetRootElement (xDoc, root);
+        xmlNsPtr ns = xmlNewNs (root, XC ("http://openbox.org/3.4/rc"), NULL);
+        xmlXPathRegisterNs (xpathCtx, XC ("openbox_config"), XC ("http://openbox.org/3.4/rc"));
     }
     else root = xpathObj->nodesetval->nodeTab[0];
     xmlXPathFreeObject (xpathObj);
