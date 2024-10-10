@@ -764,6 +764,7 @@ void read_wayfire_values (void)
 void read_labwc_values (void)
 {
     char *user_config_file = g_build_filename (g_get_user_config_dir (), "labwc/rc.xml", NULL);;
+    char *dir = g_path_get_dirname (user_config_file);
     int val;
     float fval;
     xmlXPathObjectPtr xpathObj;
@@ -775,6 +776,10 @@ void read_labwc_values (void)
     dclick = 500;
     facc = 0.0;
     left_handed = FALSE;
+
+    // create the directory if needed
+    g_mkdir_with_parents (dir, S_IRUSR | S_IWUSR | S_IXUSR);
+    g_free (dir);
 
     if (!g_file_test (user_config_file, G_FILE_TEST_IS_REGULAR))
     {
