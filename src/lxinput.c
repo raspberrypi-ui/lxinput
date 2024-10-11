@@ -332,6 +332,7 @@ static void set_dclick_time (int time)
     if (wm == WM_WAYFIRE) g_settings_set_int (mouse_settings, "double-click", time);
     else if (wm == WM_LABWC)
     {
+        g_settings_set_int (mouse_settings, "double-click", time);
         str = g_strdup_printf ("%d", time);
         set_xml_value ("mouse", NULL, NULL, NULL, "doubleClickTime", str);
         g_free (str);
@@ -773,7 +774,6 @@ void read_labwc_values (void)
     // labwc default values if nothing set in rc.xml
     interval = 40;
     delay = 600;
-    dclick = 500;
     facc = 0.0;
     left_handed = FALSE;
 
@@ -809,6 +809,7 @@ void read_labwc_values (void)
         }
         xmlXPathFreeObject (xpathObj);
     }
+    old_interval = interval;
 
     xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='keyboard']/*[local-name()='repeatDelay']", xpathCtx);
     if (xpathObj)
@@ -820,17 +821,7 @@ void read_labwc_values (void)
         }
         xmlXPathFreeObject (xpathObj);
     }
-
-    xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='mouse']/*[local-name()='doubleClickTime']", xpathCtx);
-    if (xpathObj)
-    {
-        if (xpathObj->nodesetval)
-        {
-            node = xpathObj->nodesetval->nodeTab[0];
-            if (node && sscanf ((const char *) xmlNodeGetContent (node), "%d", &val) == 1 && val > 0) dclick = val;
-        }
-        xmlXPathFreeObject (xpathObj);
-    }
+    old_delay = delay;
 
     xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='libinput']/*[local-name()='device'][@category=\"default\"]/*[local-name()='pointerSpeed']", xpathCtx);
     if (xpathObj)
@@ -842,6 +833,7 @@ void read_labwc_values (void)
         }
         xmlXPathFreeObject (xpathObj);
     }
+    old_facc = facc;
 
     xpathObj = xmlXPathEvalExpression ((xmlChar *) "/*[local-name()='openbox_config']/*[local-name()='libinput']/*[local-name()='device'][@category=\"default\"]/*[local-name()='leftHanded']", xpathCtx);
     if (xpathObj)
@@ -853,12 +845,15 @@ void read_labwc_values (void)
         }
         xmlXPathFreeObject (xpathObj);
     }
+    old_left_handed = left_handed;
 
     xmlXPathFreeContext (xpathCtx);
     xmlFreeDoc (xDoc);
     xmlCleanupParser ();
 
     g_free (user_config_file);
+    mouse_settings = g_settings_new ("org.gnome.desktop.peripherals.mouse");
+    dclick = old_dclick = g_settings_get_int (mouse_settings, "double-click");
 }
 
 int main(int argc, char** argv)
