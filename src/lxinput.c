@@ -68,7 +68,7 @@ static char fstr[16];
 static int delay = 500, old_delay = 500;
 static int interval = 30, old_interval = 30;
 static gboolean beep = TRUE, old_beep = TRUE;
-static guint dctimer = 0, matimer = 0;
+static guint dctimer = 0, matimer = 0, kbtimer = 0;
 
 static GList *devs = NULL;
 
@@ -321,7 +321,7 @@ static void reload_all_programs (void)
     gdk_event_send_clientmessage_toall((GdkEvent *)&event);
 }
 
-static void set_dclick_time (int time)
+static void set_dclick_time (void)
 {
     const char *session_name;
     char *user_config_file, *str, *fname, *scf;
@@ -329,11 +329,11 @@ static void set_dclick_time (int time)
     GKeyFile *kf;
     gsize len;
 
-    if (wm == WM_WAYFIRE) g_settings_set_int (mouse_settings, "double-click", time);
+    if (wm == WM_WAYFIRE) g_settings_set_int (mouse_settings, "double-click", dclick);
     else if (wm == WM_LABWC)
     {
-        g_settings_set_int (mouse_settings, "double-click", time);
-        str = g_strdup_printf ("%d", time);
+        g_settings_set_int (mouse_settings, "double-click", dclick);
+        str = g_strdup_printf ("%d", dclick);
         set_xml_value ("mouse", NULL, NULL, NULL, "doubleClickTime", str);
         g_free (str);
         system ("labwc -r");
@@ -360,7 +360,7 @@ static void set_dclick_time (int time)
         }
 
         // update changed values in the key file
-        g_key_file_set_integer (kf, "GTK", "iNet/DoubleClickTime", time);
+        g_key_file_set_integer (kf, "GTK", "iNet/DoubleClickTime", dclick);
 
         // write the modified key file out
         str = g_key_file_to_data (kf, &len, NULL);
@@ -375,7 +375,7 @@ static void set_dclick_time (int time)
 
 static gboolean dclick_handler (gpointer data)
 {
-    set_dclick_time ((int) data);
+    set_dclick_time ();
     dctimer = 0;
     return FALSE;
 }
@@ -383,7 +383,8 @@ static gboolean dclick_handler (gpointer data)
 static void on_mouse_dclick_changed (GtkRange* range, gpointer user_data)
 {
     if (dctimer) g_source_remove (dctimer);
-    dctimer = g_timeout_add (500, dclick_handler, (gpointer) ((int) gtk_range_get_value (range)));
+    dclick = gtk_range_get_value (range);
+    dctimer = g_timeout_add (500, dclick_handler, NULL);
 }
 
 static void set_mouse_accel (void)
@@ -501,15 +502,15 @@ static void set_kbd_rates (void)
 static gboolean kbd_handler (gpointer data)
 {
     set_kbd_rates ();
-    matimer = 0;
+    kbtimer = 0;
     return FALSE;
 }
 
 static void on_kb_range_changed (GtkRange* range, int *val)
 {
-    if (matimer) g_source_remove (matimer);
+    if (kbtimer) g_source_remove (kbtimer);
     *val = (int) gtk_range_get_value (range);
-    matimer = g_timeout_add (500, kbd_handler, NULL);
+    kbtimer = g_timeout_add (500, kbd_handler, NULL);
 }
 
 /* This function is taken from Gnome's control-center 2.6.0.3 (gnome-settings-mouse.c) and was modified*/
@@ -1023,8 +1024,9 @@ int main(int argc, char** argv)
         threshold = old_threshold;
         left_handed = old_left_handed;
         facc = old_facc;
+        dclick = old_dclick;
 
-        set_dclick_time (old_dclick);
+        set_dclick_time ();
         if (wm == WM_WAYFIRE)
         {
             user_config_file = g_build_filename (g_get_user_config_dir (), "wayfire.ini", NULL);
